@@ -1,0 +1,14 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# NV-pairs voor dit project
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+toolbox: "/Users/nipper/r_projects/salsa_toolbox_r/src/salsa_toolbox.R"
+# nip_xpr_gd_reg: "Nipper Express 0.2.FoSa"
+cz_modelrooster_gd_reg: "modelrooster_4.0"
+
+# host: "logmac"
+host: "uitzendmac"
+
+home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik--preview/"
+# home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
+
+home_schedulerswitch.uitzendmac: "//UITZENDMAC-CZ/tech/Documents/Salsa/nipper_ctl/"
