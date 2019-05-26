@@ -3,7 +3,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 toolbox: "/Users/nipper/r_projects/salsa_toolbox_r/src/salsa_toolbox.R"
 # nip_xpr_gd_reg: "Nipper Express 0.2.FoSa"
-cz_modelrooster_gd_reg: "modelrooster_4.0"
+cz_modelrooster_gd_reg: "Roosters CZ"
 
 # host: "logmac"
 host: "uitzendmac"
