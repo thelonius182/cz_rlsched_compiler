@@ -88,8 +88,22 @@ moro_long <-
     value = "titel"
   ) %>% 
   filter(!is.na(titel)) %>% 
-  arrange(dag, start, weken)
+  mutate(cz_slot_orig = paste0(str_sub(dag, 1, 2), str_sub(start, 1, 2))) %>% 
+  arrange(cz_slot_orig, weken)
 
-week1 <- moro_long %>% 
-  filter(str_detect(string = weken, pattern = "week 1|elke week|twee-wekelijks"))
-         
+cz_cal <- seq(ymd_hms("2019-06-06 13:00:00"), length.out = 168, by = "hours") %>% as_tibble()
+names(cz_cal) <- "cz_dt"
+cz_cal_slot <- cz_cal %>%
+  mutate(
+    cz_slot = format(cz_dt, format = "%a%H"),
+    moro_week = case_when(
+      day(cz_dt) > 28 ~ "week 5|elke week|twee-wekelijks",
+      day(cz_dt) > 21 ~ "week 4|elke week|twee-wekelijks",
+      day(cz_dt) > 14 ~ "week 3|elke week|twee-wekelijks",
+      day(cz_dt) >  7 ~ "week 2|elke week|twee-wekelijks",
+      TRUE  ~ "week 1|elke week|twee-wekelijks"
+    )
+  )
+
+cz_cal_slot_moro <- inner_join(cz_cal_slot, moro_long) %>% 
+    filter(str_detect(string = weken, pattern = moro_week))
