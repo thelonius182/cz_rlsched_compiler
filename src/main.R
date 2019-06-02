@@ -140,7 +140,112 @@ week_herh <- cz_cal_slot_moro_hh %>%
   filter(!is.na(cz_tijdstip))
 
 cz_week <- bind_rows(week_orig, week_herh) %>%
-  mutate(weekschema = cz_week_start + days(7L * (as.duration(cz_week_start %--% cz_tijdstip) / dhours(1)) %/% 168L)
+  mutate(weekschema = cz_week_start + days(7L * (as.duration(cz_week_start %--% cz_tijdstip) / dhours(1)) %/% 168L),
+         weekschema_hh = cz_week_start + days(7L * (as.duration(cz_week_start %--% hh_van) / dhours(1)) %/% 168L)
          ) %>%
   arrange(titel, weekschema, cz_tijdstip)
 
+# zelfde titel > 1 keer in zelfde weekschema
+cz_week_grp1 <- cz_week %>% group_by(titel, weekschema) %>% 
+  summarise(n = n()) %>% 
+  filter(n > 1) %>% 
+  select(titel) %>% unique
+
+# zelfde titel in zelfde weekschema uit verschillende periodes
+# tezamen levert dat de titels die een aparte replay-playlist nodig hebben
+cz_titels_met_replay_playlist <- cz_week %>% 
+  inner_join(cz_week_grp1) %>% 
+  mutate(playlist = titel, playlist_hh = paste0(titel, " (herhaling)")) %>% 
+  filter(!is.na(weekschema_hh) & weekschema != weekschema_hh) %>% 
+  select(titel, playlist, playlist_hh) %>% unique
+
+cz_week_grp2 <- cz_cal_slot_moro_hh %>% select(titel) %>% unique %>% 
+  filter(!str_detect(tolower(titel), pattern = "ochtend")) %>% 
+  arrange(titel) %>% 
+  left_join(cz_titels_met_replay_playlist) %>% 
+  select(-playlist)
+
+# cz_week_greep <- cz_week %>% filter(str_detect(titel, pattern = "Highw"))
+
+# genereer applescript voor aanmaken iTunes playlists ---------------------
+
+gd_itunes_cupboard <- gs_title("iTunes cupboard")
+
+itunes_cupboard_stage <- gd_itunes_cupboard %>% 
+  gs_read(ws = "playlist_names")
+
+itunes_cupboard <- itunes_cupboard_stage %>% 
+  inner_join(cz_week_grp2) %>% 
+  arrange(uitzend_mac_jn, live_jn, titel)
+
+# uitzendmac
+
+ipl_uzm_live_stage <- itunes_cupboard %>% rename(playlist = titel) %>% 
+  filter(uitzend_mac_jn == "j" & live_jn == "j") %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_uzm_live_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>% 
+  filter(uitzend_mac_jn == "j" & live_jn == "j" & !is.na(playlist)) %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_uzm_semilive_stage <- itunes_cupboard %>% rename(playlist = titel) %>%  
+  filter(uitzend_mac_jn == "j" & live_jn == "n") %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_uzm_semilive_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>% 
+  filter(uitzend_mac_jn == "j" & live_jn == "n" & !is.na(playlist)) %>% 
+  select(playlist) %>% arrange(playlist)
+
+# logmac
+
+ipl_lgm_live_stage <- itunes_cupboard %>% rename(playlist = titel) %>% 
+  filter(uitzend_mac_jn == "n" & live_jn == "j") %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_lgm_live_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>%  
+  filter(uitzend_mac_jn == "n" & live_jn == "j" & !is.na(playlist)) %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_lgm_semilive_stage <- itunes_cupboard %>% rename(playlist = titel) %>%  
+  filter(uitzend_mac_jn == "n" & live_jn == "n") %>% 
+  select(playlist) %>% arrange(playlist)
+
+ipl_lgm_semilive_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>%  
+  filter(uitzend_mac_jn == "n" & live_jn == "n" & !is.na(playlist)) %>% 
+  select(playlist) %>% arrange(playlist)
+
+# bind rows uitzend + logmac
+
+ipl_uzm_live <- bind_rows(ipl_uzm_live_stage, ipl_uzm_live_hh_stage) %>% 
+  arrange(playlist)
+
+ipl_uzm_semilive <- bind_rows(ipl_uzm_semilive_stage, ipl_uzm_semilive_hh_stage) %>% 
+  arrange(playlist)
+
+ipl_lgm_live <- bind_rows(ipl_lgm_live_stage, ipl_lgm_live_hh_stage) %>% 
+  arrange(playlist)
+
+ipl_lgm_semilive <- bind_rows(ipl_lgm_semilive_stage, ipl_lgm_semilive_hh_stage) %>% 
+  arrange(playlist)
+
+rm(
+  ipl_lgm_live_hh_stage,
+  ipl_lgm_live_stage,
+  ipl_lgm_semilive_hh_stage,
+  ipl_lgm_semilive_stage,
+  ipl_uzm_live_hh_stage,
+  ipl_uzm_live_stage,
+  ipl_uzm_semilive_hh_stage,
+  ipl_uzm_semilive_stage
+)
+
+source("src/build_applescript_to_create_ipls.R", encoding = "UTF-8")
+# LET OP! elke build genereert telkens dezeldfe file: ascr.txt. 
+# per file dus steeds met de hand: copy/paste in mac-scripteditor & run
+# LET OP #2!! de scripts voor de semi-live folder op iTunes krijgen /parent of playlist "live_ref"/ 
+#             dat met de hand ff wijzigen in "semi_live_ref"
+build_applescript_ipls(ipl_lgm_live)
+build_applescript_ipls(ipl_lgm_semilive)
+
+build_applescript_ipls(ipl_uzm_live)
+build_applescript_ipls(ipl_uzm_semilive)
