@@ -88,12 +88,15 @@ moro_long <-
     value = "titel"
   ) %>% 
   filter(!is.na(titel)) %>% 
-  mutate(cz_slot = paste0(str_sub(dag, 1, 2), str_sub(start, 1, 2))) %>%
+  mutate(
+    cz_slot = paste0(str_sub(dag, 1, 2), str_sub(start, 1, 2)),
+    titel = sub("(.*)(?: S\\d)$", "\\1", titel, perl = TRUE)
+  ) %>%
   arrange(cz_slot, weken)
 
 cz_week_start <- ymd_hms("2019-06-06 13:00:00")
 
-cz_cal <- seq(cz_week_start, length.out = 168, by = "hours") %>% as_tibble()
+cz_cal <- seq(cz_week_start, length.out = 13 * 168, by = "hours") %>% as_tibble()
 
 names(cz_cal) <- "cz_dt"
 
@@ -137,5 +140,7 @@ week_herh <- cz_cal_slot_moro_hh %>%
   filter(!is.na(cz_tijdstip))
 
 cz_week <- bind_rows(week_orig, week_herh) %>%
-  mutate(titel = sub("(.*)(?: S\\d)$", "\\1", titel, perl=TRUE)) %>%
-  arrange(cz_tijdstip)
+  mutate(weekschema = cz_week_start + days(7L * (as.duration(cz_week_start %--% cz_tijdstip) / dhours(1)) %/% 168L)
+         ) %>%
+  arrange(titel, weekschema, cz_tijdstip)
+
