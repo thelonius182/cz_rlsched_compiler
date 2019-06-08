@@ -242,10 +242,27 @@ rm(
 source("src/build_applescript_to_create_ipls.R", encoding = "UTF-8")
 # LET OP! elke build genereert telkens dezeldfe file: ascr.txt. 
 # per file dus steeds met de hand: copy/paste in mac-scripteditor & run
-# LET OP #2!! de scripts voor de semi-live folder op iTunes krijgen /parent of playlist "live_ref"/ 
+# LET OP #2!! de scripts voor de semi-live folder op iTunes krijgen /parent-of-playlist = "live_ref"/ 
 #             dat met de hand ff wijzigen in "semi_live_ref"
 build_applescript_ipls(ipl_lgm_live)
 build_applescript_ipls(ipl_lgm_semilive)
 
 build_applescript_ipls(ipl_uzm_live)
 build_applescript_ipls(ipl_uzm_semilive)
+
+
+# montagerooster koppelen -----------------------------------------------------
+
+gd_montage <- gs_title("Roosters 3.0")
+
+montage_stage <- gd_montage %>% 
+  gs_read(ws = "montage") %>% 
+  select(uzd, `Tijd.Duur`, Type)
+
+montage <- montage_stage %>% 
+  mutate(cz_tijdstip = ymd_h(paste0(uzd, " ", str_sub(`Tijd.Duur`, 1, 2))),
+         montage_live_jn = if_else(Type == "Live", "j", "n")) %>% 
+  select(cz_tijdstip, montage_live_jn)
+
+cur_cz_week_lgm %<>% left_join(montage)
+cur_cz_week_uzm %<>% left_join(montage)
