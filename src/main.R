@@ -71,8 +71,8 @@ moro_clean1 <- modelrooster %>%
          -Toon,
          -matches("^(b|r|te|t\\d)", ignore.case = F)
          ) %>%
-  rename(hh_offset = `hhOffset-dag.uur`) %>% 
-  mutate(dag = factor(x = dag, levels = c("do1", "vr1", "za1", "zo1", "ma1", "di1", "wo1", "do2"), ordered = T))
+  rename(hh_offset = `hhOffset-dag.uur`) 
+     # %>% mutate(dag = factor(x = dag, levels = c("do1", "vr1", "za1", "zo1", "ma1", "di1", "wo1", "do2"), ordered = T))
 
 moro_long <-
   gather(
@@ -89,54 +89,59 @@ moro_long <-
   ) %>% 
   filter(!is.na(titel)) %>% 
   mutate(
-    cz_slot = paste0(str_sub(dag, 1, 2), str_sub(start, 1, 2)),
+    cz_moro_slot = paste0(str_sub(dag, 1, 2), str_sub(start, 1, 2)),
+    cz_moro_slot_len = as.integer(str_sub(start, 4, 6)),
     titel = sub("(.*)(?: S\\d)$", "\\1", titel, perl = TRUE)
   ) %>%
-  arrange(cz_slot, weken)
+  arrange(cz_moro_slot, weken)
 
 cz_week_start <- ymd_hms("2019-06-06 13:00:00")
 
 cz_cal <- seq(cz_week_start, length.out = 13 * 168, by = "hours") %>% as_tibble()
 
-names(cz_cal) <- "cz_dt"
+names(cz_cal) <- "cz_cal_datetime"
 
-cz_cal_slot <- cz_cal %>%
-  mutate(
-    cz_slot = format(cz_dt, format = "%a%H"),
-    moro_week = case_when(
-      day(cz_dt) > 28 ~ "week 5|elke week|twee-wekelijks",
-      day(cz_dt) > 21 ~ "week 4|elke week|twee-wekelijks",
-      day(cz_dt) > 14 ~ "week 3|elke week|twee-wekelijks",
-      day(cz_dt) >  7 ~ "week 2|elke week|twee-wekelijks",
-      TRUE  ~ "week 1|elke week|twee-wekelijks"
-    )
+cz_cal %<>% mutate(
+  cz_cal_slot = format(cz_cal_datetime, format = "%a%H"),
+  moro_week = case_when(
+    day(cz_cal_datetime) > 28 ~ "week 5|elke week|twee-wekelijks",
+    day(cz_cal_datetime) > 21 ~ "week 4|elke week|twee-wekelijks",
+    day(cz_cal_datetime) > 14 ~ "week 3|elke week|twee-wekelijks",
+    day(cz_cal_datetime) >  7 ~ "week 2|elke week|twee-wekelijks",
+    TRUE  ~ "week 1|elke week|twee-wekelijks"
   )
+)
 
-cz_cal_slot_moro <- inner_join(cz_cal_slot, moro_long) %>%
+cz_cal_moro <- cz_cal %>% 
+  inner_join(moro_long, by = c("cz_cal_slot" = "cz_moro_slot")) %>%
   filter(str_detect(string = weken, pattern = moro_week))
 
-cz_cal_slot_moro_hh <- cz_cal_slot_moro %>%
+cz_cal_moro_hh <- cz_cal_moro %>%
   mutate(
     hh_1 = str_sub(hh_offset, 1, 2),
     # hh_inc_dagen = if_else(hh_1 == "tw", 7L, as.integer(hh_1)),
     hh_inc_dagen = as.integer(hh_1),
-    cz_dt_hh = cz_dt + days(hh_inc_dagen),
+    cz_datetime_hh = cz_cal_datetime + days(hh_inc_dagen),
     # uu_1 = if_else(hh_offset == "tw", str_sub(cz_slot, 3, 4), str_sub(hh_offset, 5, 6)),
     uu_1 = str_sub(hh_offset, 5, 6)
-  )
-hour(cz_cal_slot_moro_hh$cz_dt_hh) <- as.integer(cz_cal_slot_moro_hh$uu_1)
+  ) %>% 
+  rename(cz_slot = cz_cal_slot, cz_slot_len = cz_moro_slot_len)
+
+hour(cz_cal_moro_hh$cz_datetime_hh) <- as.integer(cz_cal_moro_hh$uu_1)
 
 
 # weken samenstellen ------------------------------------------------------
 
-week_orig <- cz_cal_slot_moro_hh %>%
-  rename(cz_tijdstip = cz_dt) %>%
-  select(cz_tijdstip, titel) %>%
-  mutate(hh_van = NA)
+week_orig <- cz_cal_moro_hh %>%
+  rename(cz_tijdstip = cz_cal_datetime) %>%
+  select(cz_tijdstip, cz_slot, cz_slot_len, titel) %>%
+  mutate(hh_van = NA, hh_van_slot = NA)
 
-week_herh <- cz_cal_slot_moro_hh %>%
-  rename(cz_tijdstip = cz_dt_hh, hh_van = cz_dt) %>%
-  select(cz_tijdstip, titel, hh_van) %>%
+week_herh <- cz_cal_moro_hh %>%
+  rename(cz_tijdstip = cz_datetime_hh, hh_van = cz_cal_datetime) %>%
+  select(cz_tijdstip, cz_slot_len, titel, hh_van, hh_van_slot = cz_slot) %>%
+  mutate(cz_slot = format(cz_tijdstip, format = "%a%H")) %>% 
+  select(cz_tijdstip, cz_slot, cz_slot_len, titel, hh_van, hh_van_slot) %>%
   filter(!is.na(cz_tijdstip))
 
 cz_week <- bind_rows(week_orig, week_herh) %>%
@@ -159,7 +164,7 @@ cz_titels_met_replay_playlist <- cz_week %>%
   filter(!is.na(weekschema_hh) & weekschema != weekschema_hh) %>% 
   select(titel, playlist, playlist_hh) %>% unique
 
-cz_week_grp2 <- cz_cal_slot_moro_hh %>% select(titel) %>% unique %>% 
+cz_week_grp2 <- cz_cal_moro_hh %>% select(titel) %>% unique %>% 
   filter(!str_detect(tolower(titel), pattern = "ochtend")) %>% 
   arrange(titel) %>% 
   left_join(cz_titels_met_replay_playlist) %>% 
@@ -167,7 +172,7 @@ cz_week_grp2 <- cz_cal_slot_moro_hh %>% select(titel) %>% unique %>%
 
 # cz_week_greep <- cz_week %>% filter(str_detect(titel, pattern = "Highw"))
 
-# genereer applescript voor aanmaken iTunes playlists ---------------------
+# apple_scripts - prep voor aanmaken iTunes playlists ---------------------
 
 gd_itunes_cupboard <- gs_title("iTunes cupboard")
 
@@ -175,43 +180,43 @@ itunes_cupboard_stage <- gd_itunes_cupboard %>%
   gs_read(ws = "playlist_names")
 
 itunes_cupboard <- itunes_cupboard_stage %>% 
-  inner_join(cz_week_grp2) %>% 
-  arrange(uitzend_mac_jn, live_jn, titel)
+  inner_join(cz_week_grp2) %>% # join by titel
+  arrange(uitzendmac_jn, titel_live_jn, titel)
 
 # uitzendmac
 
 ipl_uzm_live_stage <- itunes_cupboard %>% rename(playlist = titel) %>% 
-  filter(uitzend_mac_jn == "j" & live_jn == "j") %>% 
+  filter(uitzendmac_jn == "j" & titel_live_jn == "j") %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_uzm_live_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>% 
-  filter(uitzend_mac_jn == "j" & live_jn == "j" & !is.na(playlist)) %>% 
+  filter(uitzendmac_jn == "j" & titel_live_jn == "j" & !is.na(playlist)) %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_uzm_semilive_stage <- itunes_cupboard %>% rename(playlist = titel) %>%  
-  filter(uitzend_mac_jn == "j" & live_jn == "n") %>% 
+  filter(uitzendmac_jn == "j" & titel_live_jn == "n") %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_uzm_semilive_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>% 
-  filter(uitzend_mac_jn == "j" & live_jn == "n" & !is.na(playlist)) %>% 
+  filter(uitzendmac_jn == "j" & titel_live_jn == "n" & !is.na(playlist)) %>% 
   select(playlist) %>% arrange(playlist)
 
 # logmac
 
 ipl_lgm_live_stage <- itunes_cupboard %>% rename(playlist = titel) %>% 
-  filter(uitzend_mac_jn == "n" & live_jn == "j") %>% 
+  filter(uitzendmac_jn == "n" & titel_live_jn == "j") %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_lgm_live_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>%  
-  filter(uitzend_mac_jn == "n" & live_jn == "j" & !is.na(playlist)) %>% 
+  filter(uitzendmac_jn == "n" & titel_live_jn == "j" & !is.na(playlist)) %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_lgm_semilive_stage <- itunes_cupboard %>% rename(playlist = titel) %>%  
-  filter(uitzend_mac_jn == "n" & live_jn == "n") %>% 
+  filter(uitzendmac_jn == "n" & titel_live_jn == "n") %>% 
   select(playlist) %>% arrange(playlist)
 
 ipl_lgm_semilive_hh_stage <- itunes_cupboard %>% rename(playlist = playlist_hh) %>%  
-  filter(uitzend_mac_jn == "n" & live_jn == "n" & !is.na(playlist)) %>% 
+  filter(uitzendmac_jn == "n" & titel_live_jn == "n" & !is.na(playlist)) %>% 
   select(playlist) %>% arrange(playlist)
 
 # bind rows uitzend + logmac
@@ -239,19 +244,41 @@ rm(
   ipl_uzm_semilive_stage
 )
 
-source("src/build_applescript_to_create_ipls.R", encoding = "UTF-8")
+# apple_scripts - genereer --------------------------------------------------
+
+
+# source("src/build_applescript_to_create_ipls.R", encoding = "UTF-8")
 # LET OP! elke build genereert telkens dezeldfe file: ascr.txt. 
 # per file dus steeds met de hand: copy/paste in mac-scripteditor & run
 # LET OP #2!! de scripts voor de semi-live folder op iTunes krijgen /parent-of-playlist = "live_ref"/ 
 #             dat met de hand ff wijzigen in "semi_live_ref"
-build_applescript_ipls(ipl_lgm_live)
-build_applescript_ipls(ipl_lgm_semilive)
 
-build_applescript_ipls(ipl_uzm_live)
-build_applescript_ipls(ipl_uzm_semilive)
+# build_applescript_ipls(ipl_lgm_live)
+# build_applescript_ipls(ipl_lgm_semilive)
+# 
+# build_applescript_ipls(ipl_uzm_live)
+# build_applescript_ipls(ipl_uzm_semilive)
 
 
 # montagerooster koppelen -----------------------------------------------------
+
+cur_cz_week_lgm_prep <- cz_week %>% 
+  filter(weekschema == ymd_hm("2019-06-20 13:00")) %>% 
+  inner_join(itunes_cupboard) %>% # Joining, by = "titel"
+  filter(uitzendmac_jn == "n") %>% 
+  filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
+  select(-starts_with("week"), -uitzendmac_jn) %>% 
+  mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
+  arrange(titel)
+
+cur_cz_week_uzm_prep <- cz_week %>% 
+  filter(weekschema == ymd_hm("2019-06-20 13:00")) %>% 
+  inner_join(itunes_cupboard) %>% # Joining, by = "titel"
+  filter(uitzendmac_jn == "j") %>% 
+  filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
+  select(-starts_with("week"), -uitzendmac_jn) %>% 
+  mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
+  arrange(titel)
 
 gd_montage <- gs_title("Roosters 3.0")
 
@@ -261,8 +288,24 @@ montage_stage <- gd_montage %>%
 
 montage <- montage_stage %>% 
   mutate(cz_tijdstip = ymd_h(paste0(uzd, " ", str_sub(`Tijd.Duur`, 1, 2))),
-         montage_live_jn = if_else(Type == "Live", "j", "n")) %>% 
-  select(cz_tijdstip, montage_live_jn)
+         mtr_live_jn = if_else(str_to_lower(Type) == "live", "j", "n")) %>% 
+  select(cz_tijdstip, mtr_live_jn)
 
-cur_cz_week_lgm %<>% left_join(montage)
-cur_cz_week_uzm %<>% left_join(montage)
+# huidige week maken ------------------------------------------------------
+
+cur_cz_week_lgm <- cur_cz_week_lgm_prep %>% 
+  left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
+  rename(hh_van_live_jn = mtr_live_jn) %>% 
+  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
+  rename(nieuw_live_jn = mtr_live_jn) 
+  
+cur_cz_week_uzm <- cur_cz_week_uzm_prep %>% 
+  left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
+  rename(hh_van_live_jn = mtr_live_jn) %>% 
+  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
+  rename(nieuw_live_jn = mtr_live_jn) 
+
+# live-programma's hebben geen script of playlist nodig
+
+cur_cz_week_uzm %<>% 
+  mutate(sched_playlist = if_else(nieuw_live_jn == "j", "CZ All Empty", sched_playlist))
