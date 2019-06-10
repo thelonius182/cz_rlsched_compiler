@@ -293,19 +293,65 @@ montage <- montage_stage %>%
 
 # huidige week maken ------------------------------------------------------
 
-cur_cz_week_lgm <- cur_cz_week_lgm_prep %>% 
-  left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
-  rename(hh_van_live_jn = mtr_live_jn) %>% 
-  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
-  rename(nieuw_live_jn = mtr_live_jn) 
-  
 cur_cz_week_uzm <- cur_cz_week_uzm_prep %>% 
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
   rename(hh_van_live_jn = mtr_live_jn) %>% 
   left_join(montage) %>%  # Joining, by = "cz_tijdstip"
-  rename(nieuw_live_jn = mtr_live_jn) 
+  rename(nieuw_live_jn = mtr_live_jn) %>% 
+  mutate(mac = "U")
+  
+cur_cz_week_lgm <- cur_cz_week_lgm_prep %>% 
+  left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
+  rename(hh_van_live_jn = mtr_live_jn) %>% 
+  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
+  rename(nieuw_live_jn = mtr_live_jn) %>% 
+  mutate(mac = "L")
 
 # live-programma's hebben geen script of playlist nodig
 
 cur_cz_week_uzm %<>% 
-  mutate(sched_playlist = if_else(nieuw_live_jn == "j", "CZ All Empty", sched_playlist))
+  mutate(sched_playlist = if_else(nieuw_live_jn == "n" | is.na(nieuw_live_jn), 
+                                  sched_playlist, 
+                                  "live > geen playlist nodig")
+         )
+cur_cz_week_lgm %<>% 
+  mutate(sched_playlist = if_else(nieuw_live_jn == "n" | is.na(nieuw_live_jn), 
+                                  sched_playlist, 
+                                  "live > geen playlist nodig")
+         )
+
+# semi-live programma's: systeemdeel van audiofiles (jaar-mnd-dag-dagnaam-uur-duur)
+source("src/compile_cur_week.R", encoding = "UTF-8")
+cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
+cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
+
+# playlist weekschema
+plw_hijack <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
+  rename(itunes_playlist = sched_playlist) %>% 
+  mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
+         sys_audiotitel = if_else(itunes_playlist == "Thema",
+                                  sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
+                                      "\\1120", sys_audiotitel, perl=TRUE),
+                                  sys_audiotitel)
+         ) %>% 
+  filter(str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
+  distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+  select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+  arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
+
+plw <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
+  rename(itunes_playlist = sched_playlist) %>% 
+  mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
+         sys_audiotitel = if_else(itunes_playlist == "Thema",
+                                  sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
+                                      "\\1120", sys_audiotitel, perl=TRUE),
+                                  sys_audiotitel)
+         ) %>% 
+  filter(!str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
+  filter(!str_detect(itunes_playlist, pattern = "live >")) %>% 
+  distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+  select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+  arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
+
+saveRDS(plw_hijack, file = "plw_hijack.rds")
+saveRDS(plw, file = "plw.rds")
