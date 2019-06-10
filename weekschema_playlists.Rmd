@@ -1,0 +1,72 @@
+---
+output: pdf_document
+title: "Weekschema iTunes-playlists"
+date: '`r dtm <- lubridate::today(); format(dtm, format = "%e %B %Y")`'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r schema, echo=FALSE}
+suppressMessages(library(knitr))
+suppressMessages(library(magrittr))
+suppressMessages(library(dplyr))
+suppressMessages(library(stringr))
+suppressMessages(library(kableExtra))
+
+options(knitr.table.format = "latex")
+
+# prep hijack audio
+plw_hijack <- readRDS("plw_hijack.RDS") 
+plw_hijack %<>% rename(audio = sys_audiotitel) %>% arrange(mac, itunes_playlist)
+plw_hijack$audio <- str_sub(plw_hijack$audio, 9)
+
+plw_hijack_n_uzm <- plw_hijack %>% filter(mac == "U") %>% count
+plw_hijack_n_lgm <- plw_hijack %>% filter(mac == "L") %>% count
+
+# plw_hijack %<>% select(-itunes_folder, -mac) 
+
+# overzicht hijack
+if (plw_hijack_n_uzm$n > 0 & plw_hijack_n_lgm$n > 0) {
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+    kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
+    # group_rows("Log-mac", 1, plw_hijack_n_lgm$n) %>% 
+    # group_rows("Uitzend-mac", 1 + plw_hijack_n_lgm$n, plw_hijack_n_uzm$n)
+} else if (plw_hijack_n_lgm$n > 0) {
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+    kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
+    # group_rows("Log-mac", 1, plw_hijack_n_lgm$n)
+} else if (plw_hijack_n_uzm$n > 0) {
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+    kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
+    # group_rows("Uitzend-mac", 1, plw_hijack_n_uzm$n)
+}
+
+# prep regular audio
+plw <- readRDS("plw.RDS")
+plw %<>% rename(audio = sys_audiotitel)
+plw_lgm <- plw %>% filter(mac == "L") %>% select(-mac) %>% arrange(itunes_folder, itunes_playlist)
+plw_uzm <- plw %>% filter(mac == "U") %>% select(-mac) %>% arrange(itunes_folder, itunes_playlist)
+
+plw_n_lgm_live <- plw_lgm %>% filter(itunes_folder == "Live") %>% count
+plw_n_lgm_semilive <- plw_lgm %>% filter(itunes_folder == "Semi-Live") %>% count
+plw_n_uzm_live <- plw_uzm %>% filter(itunes_folder == "Live") %>% count
+plw_n_uzm_semilive <- plw_uzm %>% filter(itunes_folder == "Semi-Live") %>% count
+
+# plw_lgm %<>% select(-itunes_folder)
+# plw_uzm %<>% select(-itunes_folder)
+
+# overzicht non-hijack audio Log-mac
+kable(plw_lgm, booktabs = T, longtable = T, caption = "Montages en Uploads voor LOG-mac") %>%
+  kable_styling(latex_options = c("striped", "HOLD_position", "repeat_header"), full_width = F, font_size = 8, position = "left") 
+  # group_rows("Live", 1, plw_n_lgm_live$n) %>% 
+  # group_rows("Semi-Live", 1 + plw_n_lgm_live$n, plw_n_lgm_semilive$n)
+
+# overzicht non-hijack audio Uitzend-mac
+kable(plw_uzm, booktabs = T, longtable = T, caption = "Montages en Uploads voor UITZEND-mac") %>%
+  kable_styling(latex_options = c("striped", "HOLD_position", "repeat_header"), full_width = F, font_size = 8, position = "left") 
+  # group_rows("Live", 1, plw_n_uzm_live$n) %>% 
+  # group_rows("Semi-Live", 1 + plw_n_uzm_live$n, plw_n_uzm_semilive$n)
+
+```

@@ -170,8 +170,6 @@ cz_week_grp2 <- cz_cal_moro_hh %>% select(titel) %>% unique %>%
   left_join(cz_titels_met_replay_playlist) %>% 
   select(-playlist)
 
-# cz_week_greep <- cz_week %>% filter(str_detect(titel, pattern = "Highw"))
-
 # apple_scripts - prep voor aanmaken iTunes playlists ---------------------
 
 gd_itunes_cupboard <- gs_title("iTunes cupboard")
@@ -245,7 +243,6 @@ rm(
 )
 
 # apple_scripts - genereer --------------------------------------------------
-
 
 # source("src/build_applescript_to_create_ipls.R", encoding = "UTF-8")
 # LET OP! elke build genereert telkens dezeldfe file: ascr.txt. 
@@ -355,3 +352,26 @@ plw <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>%
 
 saveRDS(plw_hijack, file = "plw_hijack.rds")
 saveRDS(plw, file = "plw.rds")
+
+
+# scheduler scripts - genereer --------------------------------------------
+
+# uitzend-mac
+scheds_prep <- cur_cz_week_uzm %>% 
+  filter(sched_playlist != "live > geen playlist nodig") %>% 
+  mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
+                              ".",
+                              str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
+                              " ",
+                              sched_playlist)
+         ) %>% 
+  select(ts_playlist) %>% 
+  arrange(ts_playlist)
+
+source("src/compile_rlsched_script.R", encoding = "UTF-8")
+cur_kleurschema <- "geel"
+
+for (cur_ts_playlist in scheds_prep$ts_playlist) {
+  cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
+  build_rl_script(cur_ts_playlist, cur_kleurschema)  
+}

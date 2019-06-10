@@ -1,5 +1,8 @@
-build_rl_script <- function(playlist) {
-  # playlist <- "20181118_zo10.060_een_vroege_wandeling"
+build_rl_script <- function(playlist, kleurschema) {
+  # playlist <- "2018-11-18 zo10.060 Bijdetijds (herhaling)"
+  # kleurschema <- "oranje"
+  pl_name <- str_sub(playlist, 21)
+  playlist <- str_replace_all(playlist, pattern = "\\.| ", replacement = "_")
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Info types samenstellen - zie tabblad "schedule_radiologik"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -36,7 +39,8 @@ build_rl_script <- function(playlist) {
   sch01_C8 <- "ProgramCopyPath=nopath" %>% as_tibble
   
   # color
-  sch01_color <- "ColorLabel=238,238,153" %>% as_tibble # oranje 255,128,0 | geel 255,204,102
+  sch01_color_prep <- if_else(kleurschema == "geel", "255,204,102", "255,128,0")
+  sch01_color <- paste0("ColorLabel=", sch01_color_prep) %>% as_tibble # oranje 255,128,0 | geel 255,204,102
   
   # const_10
   sch01_const_10 <- "0" %>% as_tibble
@@ -99,8 +103,8 @@ build_rl_script <- function(playlist) {
 }
 
 rls_dagletters <- function(some_playlist) {
-  # some_playlist <- "20180603_wo07.060_de_titel_klassiek"
-  dag_kort <- str_sub(some_playlist, 10, 11)
+  # some_playlist <- "2018-06-03_wo07.060_de_titel_klassiek"
+  dag_kort <- str_sub(some_playlist, 12, 13)
   rls_dagletters_result <- case_when(dag_kort == "ma" ~ "_M_____",
                                      dag_kort == "di" ~ "__T____",
                                      dag_kort == "wo" ~ "___W___",
@@ -112,19 +116,19 @@ rls_dagletters <- function(some_playlist) {
 }
 
 rls_lengte <- function(some_playlist) {
-  # some_playlist <- "20180603_wo07.060_de_titel_klassiek"
-  rls_lengte_result <- str_sub(some_playlist, 15, 17) %>% as.integer %>% as.character
+  # some_playlist <- "2018-06-03_wo07.060_de_titel_klassiek"
+  rls_lengte_result <- str_sub(some_playlist, 17, 19) %>% as.integer %>% as.character
 }
 
 rls_30m_blokken <- function(some_playlist){
-  # some_playlist <- "20180603_wo07.180_de_titel_klassiek"
-  rls_30m_blokken_result <- some_playlist %>% str_sub(12, 13) %>% as.integer
+  # some_playlist <- "2018-06-03_wo07.180_de_titel_klassiek"
+  rls_30m_blokken_result <- some_playlist %>% str_sub(14, 15) %>% as.integer
   rls_30m_blokken_result <- as.character(2 * rls_30m_blokken_result)
 }
 
 rls_venster <- function(some_playlist) {
-  # some_playlist <- "20181231_wo00.420_de_nacht_klassiek"
-  venster_datum_start <- str_sub(some_playlist, 1, 8) %>% ymd
+  # some_playlist <- "2018-12-31 wo00.420 de nacht klassiek"
+  venster_datum_start <- str_sub(some_playlist, 1, 10) %>% ymd
   venster_datum_stop <- venster_datum_start + days(1) # hier zat de herhaling: days(8)
   rl_date_fmt <- stamp_date("23 mrt. 2018")
   venster_datum_start %<>% rl_date_fmt %>% str_replace(pattern = "mei\\.", replacement = "mei ")
