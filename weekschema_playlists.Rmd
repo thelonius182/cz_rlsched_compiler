@@ -19,8 +19,10 @@ options(knitr.table.format = "latex")
 
 # prep hijack audio
 plw_hijack <- readRDS("plw_hijack.RDS") 
-plw_hijack %<>% rename(audio = sys_audiotitel) %>% arrange(mac, itunes_playlist)
+# plw_hijack %<>% rename(audio = sys_audiotitel) %>% arrange(mac, itunes_playlist)
+plw_hijack %<>% rename(audio = sys_audiotitel) 
 plw_hijack$audio <- str_sub(plw_hijack$audio, 9)
+plw_hijack %<>% arrange(mac, audio)
 
 plw_hijack_n_uzm <- plw_hijack %>% filter(mac == "U") %>% count
 plw_hijack_n_lgm <- plw_hijack %>% filter(mac == "L") %>% count
@@ -46,8 +48,8 @@ if (plw_hijack_n_uzm$n > 0 & plw_hijack_n_lgm$n > 0) {
 # prep regular audio
 plw <- readRDS("plw.RDS")
 plw %<>% rename(audio = sys_audiotitel)
-plw_lgm <- plw %>% filter(mac == "L") %>% select(-mac) %>% arrange(itunes_folder, itunes_playlist)
-plw_uzm <- plw %>% filter(mac == "U") %>% select(-mac) %>% arrange(itunes_folder, itunes_playlist)
+plw_lgm <- plw %>% filter(mac == "L") %>% select(-mac) %>% arrange(audio)
+plw_uzm <- plw %>% filter(mac == "U") %>% select(-mac) %>% arrange(audio)
 
 plw_n_lgm_live <- plw_lgm %>% filter(itunes_folder == "Live") %>% count
 plw_n_lgm_semilive <- plw_lgm %>% filter(itunes_folder == "Semi-Live") %>% count
