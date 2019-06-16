@@ -38,21 +38,6 @@ flog.info("= = = = = RL-schedulerscript Compiler start = = = = =", name = "rlsc_
 config <- read_yaml("config.yaml")
 source(config$toolbox, encoding = "UTF-8")
 
-host <- config$host
-home_radiologik <- home_prop("home_radiologik")
-# switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Stop RL-scheduler op de mac en wacht 5 seconden - stoppen duurt soms even
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# flog.info("RL-scheduler stoppen", name = "nipperlog")
-# switch <- read_lines(file = switch_home)
-# switch <- "stop RL-scheduler"
-# write_lines(switch, path = switch_home, append = FALSE)
-
-# Sys.sleep(time = 5)
-# flog.info("RL-scheduler is gestopt", name = "nipperlog")
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # Modelrooster op GD openen
 # NB!! zonodig: change to new user; er opent een browser dialogue
@@ -95,7 +80,11 @@ moro_long <-
   ) %>%
   arrange(cz_moro_slot, weken)
 
-cz_week_start <- ymd_hms("2019-06-06 13:00:00")
+# run_cz_week is het begintijdstip van de week waarvoor in deze run scripts gemaakt moeten worden
+# cz_week_start is het begintijdstip van de kwartaalreeks die voor het maken vd scripts nodig is
+#   zodat elke titel minstens 1 x in de reeks zit; daar zijn 13 weken voor nodig.
+run_cz_week <- config$cur_cz_week
+cz_week_start <- ymd_hm(run_cz_week) - days(14)
 
 cz_cal <- seq(cz_week_start, length.out = 13 * 168, by = "hours") %>% as_tibble()
 
@@ -258,9 +247,8 @@ rm(
 
 
 # montagerooster koppelen -----------------------------------------------------
-
 cur_cz_week_lgm_prep <- cz_week %>% 
-  filter(weekschema == ymd_hm("2019-06-20 13:00")) %>% 
+  filter(weekschema == ymd_hm(run_cz_week)) %>% 
   inner_join(itunes_cupboard) %>% # Joining, by = "titel"
   filter(uitzendmac_jn == "n") %>% 
   filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
@@ -269,7 +257,7 @@ cur_cz_week_lgm_prep <- cz_week %>%
   arrange(titel)
 
 cur_cz_week_uzm_prep <- cz_week %>% 
-  filter(weekschema == ymd_hm("2019-06-20 13:00")) %>% 
+  filter(weekschema == ymd_hm(run_cz_week)) %>% 
   inner_join(itunes_cupboard) %>% # Joining, by = "titel"
   filter(uitzendmac_jn == "j") %>% 
   filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
@@ -353,10 +341,25 @@ plw <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>%
 saveRDS(plw_hijack, file = "plw_hijack.rds")
 saveRDS(plw, file = "plw.rds")
 
-
 # scheduler scripts - genereer --------------------------------------------
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # uitzend-mac
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+flog.info("Start scriptgeneratie op de Uitzend-mac", name = "rlsc_log")
+host <- "uitzendmac"
+home_radiologik <- home_prop("home_radiologik")
+switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
+
+# Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
+flog.info("RL-scheduler stoppen", name = "rlsc_log")
+switch <- read_lines(file = switch_home)
+switch <- "stop RL-scheduler"
+write_lines(switch, path = switch_home, append = FALSE)
+
+Sys.sleep(time = 5)
+flog.info("RL-scheduler is gestopt", name = "rlsc_log")
+
 scheds_prep <- cur_cz_week_uzm %>% 
   filter(sched_playlist != "live > geen playlist nodig") %>% 
   mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
@@ -374,4 +377,59 @@ cur_kleurschema <- "geel"
 for (cur_ts_playlist in scheds_prep$ts_playlist) {
   cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
   build_rl_script(cur_ts_playlist, cur_kleurschema)  
+  flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
 }
+
+# RL-scheduler herstarten
+flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
+switch <- read_lines(file = switch_home)
+switch <- "start RL-scheduler"
+write_lines(switch, path = switch_home, append = FALSE)
+flog.info("RL-scheduler draait weer", name = "rlsc_log")
+flog.info("- - - - - - - - - -", name = "rlsc_log")
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# log-mac
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+flog.info("Start scriptgeneratie op de Log-mac", name = "rlsc_log")
+host <- "logmac"
+home_radiologik <- home_prop("home_radiologik")
+switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
+
+# Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
+flog.info("RL-scheduler stoppen", name = "rlsc_log")
+switch <- read_lines(file = switch_home)
+switch <- "stop RL-scheduler"
+write_lines(switch, path = switch_home, append = FALSE)
+
+Sys.sleep(time = 5)
+flog.info("RL-scheduler is gestopt", name = "rlsc_log")
+
+scheds_prep <- cur_cz_week_lgm %>% 
+  filter(sched_playlist != "live > geen playlist nodig") %>% 
+  mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
+                              ".",
+                              str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
+                              " ",
+                              sched_playlist)
+  ) %>% 
+  select(ts_playlist) %>% 
+  arrange(ts_playlist)
+
+source("src/compile_rlsched_script.R", encoding = "UTF-8")
+cur_kleurschema <- "geel"
+
+for (cur_ts_playlist in scheds_prep$ts_playlist) {
+  cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
+  build_rl_script(cur_ts_playlist, cur_kleurschema)  
+  flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
+}
+
+# RL-scheduler herstarten
+flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
+switch <- read_lines(file = switch_home)
+switch <- "start RL-scheduler"
+write_lines(switch, path = switch_home, append = FALSE)
+flog.info("RL-scheduler draait weer", name = "rlsc_log")
+
+flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")

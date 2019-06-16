@@ -6,9 +6,14 @@ toolbox: "/Users/nipper/r_projects/salsa_toolbox_r/src/salsa_toolbox.R"
 cz_modelrooster_gd_reg: "Roosters 3.0"
 
 # host: "logmac"
-host: "uitzendmac"
+# host: "uitzendmac"
 
-home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik--preview/"
-# home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
+# home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik--preview/"
 
+home_radiologik.logmac: "//LOGMAC/Radiologik/"
+home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
+
+home_schedulerswitch.logmac: "//LOGMAC/tech/Documents/Salsa/nipper_ctl/"
 home_schedulerswitch.uitzendmac: "//UITZENDMAC-CZ/tech/Documents/Salsa/nipper_ctl/"
+
+cur_cz_week: "2019-06-20 13:00"

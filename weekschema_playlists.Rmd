@@ -31,16 +31,16 @@ plw_hijack_n_lgm <- plw_hijack %>% filter(mac == "L") %>% count
 
 # overzicht hijack
 if (plw_hijack_n_uzm$n > 0 & plw_hijack_n_lgm$n > 0) {
-  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files") %>%
     kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
     # group_rows("Log-mac", 1, plw_hijack_n_lgm$n) %>% 
     # group_rows("Uitzend-mac", 1 + plw_hijack_n_lgm$n, plw_hijack_n_uzm$n)
 } else if (plw_hijack_n_lgm$n > 0) {
-  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files") %>%
     kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
     # group_rows("Log-mac", 1, plw_hijack_n_lgm$n)
 } else if (plw_hijack_n_uzm$n > 0) {
-  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files voor iTunes-folder LIVE") %>%
+  kable(plw_hijack, booktabs = T, longtable = T, caption = "HiJack Files") %>%
     kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 8, position = "left") #%>% 
     # group_rows("Uitzend-mac", 1, plw_hijack_n_uzm$n)
 }

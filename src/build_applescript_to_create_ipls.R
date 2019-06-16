@@ -17,7 +17,7 @@ build_applescript_ipls <- function(ipl_tbl) {
   # ipl_tbl = ipl_lgm_live
   
   ascr01_C0 <- "tell application \"iTunes\"" %>% as_tibble
-  ascr01_C1 <- "set cur_parent_folder to get parent of playlist \"live_ref\"" %>% as_tibble
+  ascr01_C1 <- "set cur_parent_folder to get parent of playlist \"r4_ref\"" %>% as_tibble
   # ascr01_C3 <- paste0(ascr01_C2a, ascr01_C2b, ascr01_C2c) %>% as_tibble
   ascr01_C4 <- "end tell" %>% as_tibble
 
