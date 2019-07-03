@@ -16,7 +16,7 @@ build_rl_script <- function(playlist, kleurschema) {
   sch01_lengte <- rls_lengte(playlist) %>% as_tibble
   
   # dj_voorkeur
-  sch01_dj_voorkeur <- "Default" %>% as_tibble
+  sch01_dj_voorkeur <- "standaard" %>% as_tibble
   
   # stuur_naar_dj
   sch01_stuur_naar_dj <- "ProgramTo=0" %>% as_tibble
