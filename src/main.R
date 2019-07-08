@@ -251,7 +251,6 @@ cur_cz_week_lgm_prep <- cz_week %>%
   filter(weekschema == ymd_hm(run_cz_week)) %>% 
   inner_join(itunes_cupboard) %>% # Joining, by = "titel"
   filter(uitzendmac_jn == "n") %>% 
-  filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
   select(-starts_with("week"), -uitzendmac_jn) %>% 
   mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
   arrange(titel)
@@ -260,7 +259,7 @@ cur_cz_week_uzm_prep <- cz_week %>%
   filter(weekschema == ymd_hm(run_cz_week)) %>% 
   inner_join(itunes_cupboard) %>% # Joining, by = "titel"
   filter(uitzendmac_jn == "j") %>% 
-  filter(!(titel == "Thema" & hour(cz_tijdstip) == 21)) %>% 
+  filter(!(titel == "Thema" & (hour(cz_tijdstip) == 21 | hour(hh_van) == 21))) %>% 
   select(-starts_with("week"), -uitzendmac_jn) %>% 
   mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
   arrange(titel)
@@ -309,37 +308,38 @@ cur_cz_week_lgm %<>%
 source("src/compile_cur_week.R", encoding = "UTF-8")
 cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
 cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
+source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 
 # playlist weekschema
-plw_hijack <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
-  rename(itunes_playlist = sched_playlist) %>% 
-  mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
-         sys_audiotitel = if_else(itunes_playlist == "Thema",
-                                  sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
-                                      "\\1120", sys_audiotitel, perl=TRUE),
-                                  sys_audiotitel)
-         ) %>% 
-  filter(str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
-  distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
-  select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
-  arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
-
-plw <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
-  rename(itunes_playlist = sched_playlist) %>% 
-  mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
-         sys_audiotitel = if_else(itunes_playlist == "Thema",
-                                  sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
-                                      "\\1120", sys_audiotitel, perl=TRUE),
-                                  sys_audiotitel)
-         ) %>% 
-  filter(!str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
-  filter(!str_detect(itunes_playlist, pattern = "live >")) %>% 
-  distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
-  select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
-  arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
-
-saveRDS(plw_hijack, file = "plw_hijack.rds")
-saveRDS(plw, file = "plw.rds")
+# plw_hijack <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
+#   rename(itunes_playlist = sched_playlist) %>% 
+#   mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
+#          sys_audiotitel = if_else(itunes_playlist == "Thema",
+#                                   sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
+#                                       "\\1120", sys_audiotitel, perl=TRUE),
+#                                   sys_audiotitel)
+#          ) %>% 
+#   filter(str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
+#   distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+#   select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+#   arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
+# 
+# plw <- rbind(cur_cz_week_lgm, cur_cz_week_uzm) %>% 
+#   rename(itunes_playlist = sched_playlist) %>% 
+#   mutate(itunes_folder = if_else(titel_live_jn == "j", "Live", "Semi-Live"),
+#          sys_audiotitel = if_else(itunes_playlist == "Thema",
+#                                   sub("(\\d{4}-\\d{2}-\\d{2} wo20\\.)060", 
+#                                       "\\1120", sys_audiotitel, perl=TRUE),
+#                                   sys_audiotitel)
+#          ) %>% 
+#   filter(!str_detect(sys_audiotitel, pattern = "HiJack")) %>% 
+#   filter(!str_detect(itunes_playlist, pattern = "live >")) %>% 
+#   distinct(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+#   select(mac, itunes_folder, itunes_playlist, sys_audiotitel) %>% 
+#   arrange(mac, itunes_folder, itunes_playlist, sys_audiotitel)
+# 
+# saveRDS(plw_hijack, file = "plw_hijack.rds")
+# saveRDS(plw, file = "plw.rds")
 
 # scheduler scripts - genereer --------------------------------------------
 
