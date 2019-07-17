@@ -1,4 +1,8 @@
-spoorboekje <- read_csv("spoorboekje_20190711.csv") %>%
+cfg_cur_week_ymd <- format(date(ymd_hm(config$cur_cz_week)), format = "%Y%m%d")
+spb_name <- paste0("spoorboekje_", cfg_cur_week_ymd, ".csv")
+plw_output_name <- paste0("cz_week_", cfg_cur_week_ymd, ".tsv")
+
+spoorboekje <- read_csv(spb_name) %>%
   mutate(cur_cz_week_key = ymd_h(paste0(pgm_dtm, " ", pgm_start)))
 
 pl_weekschema_uzm <- cur_cz_week_uzm %>% 
@@ -45,4 +49,4 @@ pl_weekschema <- rbind(pl_weekschema_lgm, pl_weekschema_uzm) %>%
   select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) %>% 
   arrange(mac)
 
-write_delim(pl_weekschema, delim = "\t", col_names = T, path = "cz_week_20190711.tsv", append = F)
+write_delim(pl_weekschema, delim = "\t", col_names = T, path = plw_output_name, append = F)

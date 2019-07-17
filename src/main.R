@@ -46,7 +46,7 @@ source(config$toolbox, encoding = "UTF-8")
 gd_modelrooster <- gs_title(config$cz_modelrooster_gd_reg)
 
 modelrooster <- gd_modelrooster %>% 
-  gs_read(ws = "modelrooster-20190620") 
+  gs_read(ws = paste0("modelrooster-", config$cz_modelrooster_versie)) 
 
 moro_clean1 <- modelrooster %>%
   select(-X1,
