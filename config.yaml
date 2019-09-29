@@ -16,6 +16,6 @@ home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
 home_schedulerswitch.logmac: "//LOGMAC/tech/Documents/Salsa/nipper_ctl/"
 home_schedulerswitch.uitzendmac: "//UITZENDMAC-CZ/tech/Documents/Salsa/nipper_ctl/"
 
-cz_modelrooster_versie: "20190620"
+cz_modelrooster_versie: "20190801"
 
-cur_cz_week: "2019-07-18 13:00"
+cur_cz_week: "2019-09-26 13:00"
