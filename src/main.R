@@ -281,7 +281,7 @@ montage <- montage_stage %>%
          mtr_live_jn = if_else(str_to_lower(Type) == "live", "j", "n")) %>% 
   select(cz_tijdstip, mtr_live_jn)
 
-# huidige week maken ------------------------------------------------------
+# huidige week voorbereiden ----
 
 cur_cz_week_uzm <- cur_cz_week_uzm_prep %>% 
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
@@ -316,95 +316,155 @@ cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
 cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
 source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 
-# scheduler scripts - genereer --------------------------------------------
+# Vervang de scripts ----
+if (valid_spoorboekje) {
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# uitzend-mac
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-flog.info("Start scriptgeneratie op de Uitzend-mac", name = "rlsc_log")
-host <- "uitzendmac"
-home_radiologik <- home_prop("home_radiologik")
-switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
-
-# Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
-flog.info("RL-scheduler stoppen", name = "rlsc_log")
-switch <- read_lines(file = switch_home)
-switch <- "stop RL-scheduler"
-write_lines(switch, path = switch_home, append = FALSE)
-
-Sys.sleep(time = 5)
-flog.info("RL-scheduler is gestopt", name = "rlsc_log")
-
-scheds_prep <- cur_cz_week_uzm %>% 
-  filter(sched_playlist != "live > geen playlist nodig") %>% 
-  mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
-                              ".",
-                              str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
-                              " ",
-                              sched_playlist)
-         ) %>% 
-  select(ts_playlist) %>% 
-  arrange(ts_playlist)
-
-source("src/compile_rlsched_script.R", encoding = "UTF-8")
-cur_kleurschema <- "geel"
-
-for (cur_ts_playlist in scheds_prep$ts_playlist) {
-  cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
-  build_rl_script(cur_ts_playlist, cur_kleurschema)  
-  flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
+  source("src/ditch_expired_sched_scripts.R", encoding = "UTF-8")
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  #+ op Uitzend-mac ----
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  flog.info("Start scriptgeneratie op de Uitzend-mac", name = "rlsc_log")
+  host <- "uitzendmac"
+  home_radiologik <- home_prop("home_radiologik")
+  switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
+  
+  # Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
+  flog.info("RL-scheduler stoppen", name = "rlsc_log")
+  switch <- read_lines(file = switch_home)
+  switch <- "stop RL-scheduler"
+  write_lines(switch, path = switch_home, append = FALSE)
+  
+  Sys.sleep(time = 5)
+  flog.info("RL-scheduler is gestopt", name = "rlsc_log")
+  
+  #+... gooi verlopen scripts weg ----
+  uzm_path <- "//UITZENDMAC-CZ/Radiologik/Schedule"
+  
+  # Ochtendeditie-scripts
+  oe_sched <- dir_info(path = uzm_path) %>% 
+    filter(str_detect(path, "ochtendeditie")) %>% 
+    mutate(script_item = str_sub(path, 37, 39),
+           script_date = str_sub(path, 43, 50),
+           script_hour = str_sub(path, 54, 55),
+           script_length = str_sub(path, 57, 59)
+    ) %>% 
+    select(path, starts_with("script"))
+  
+  oe_expiration <- oe_sched %>% 
+    mutate(script_ymdh_s = paste0(script_date, " ", script_hour, ":00"),
+           script_ymdh = ymd_hm(script_ymdh_s, tz = "Europe/Amsterdam"),
+           # script verloopt 1 uur na einde uitzending; voor OE komen daar 7 dagen bij, vanwege herhaling
+           script_expires = script_ymdh + minutes(as.integer(script_length) + 60) + days(7),
+           script_interval = interval(script_expires, now(), tz = "Europe/Amsterdam"),
+           expired_h = round(script_interval / dhours(1), digits = 1)
+    )
+  
+  oe_files_to_ditch <- oe_expiration %>% 
+    select(-starts_with("script")) %>% 
+    filter(expired_h > 0.0) %>% 
+    select(path)
+  
+  for (a_file in oe_files_to_ditch$path) {
+    file_delete(a_file)
+  }
+  
+  # weekscripts
+  uzm_weekfiles_to_ditch <- get_weekfiles_to_ditch(uzm_path)
+  
+  for (a_file in uzm_weekfiles_to_ditch$dir_info_path) {
+    file_delete(a_file)
+  }
+  
+  #+... herstel volgorde ----
+  resequence_script_names(uzm_path)
+  
+  #+... genereer nieuwe ----
+  scheds_prep <- cur_cz_week_uzm %>% 
+    filter(sched_playlist != "live > geen playlist nodig") %>% 
+    mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
+                                ".",
+                                str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
+                                " ",
+                                sched_playlist)
+    ) %>% 
+    select(ts_playlist) %>% 
+    arrange(ts_playlist)
+  
+  source("src/compile_rlsched_script.R", encoding = "UTF-8")
+  cur_kleurschema <- "geel"
+  
+  for (cur_ts_playlist in scheds_prep$ts_playlist) {
+    cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
+    build_rl_script(cur_ts_playlist, cur_kleurschema)  
+    flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
+  }
+  
+  # RL-scheduler herstarten
+  flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
+  switch <- read_lines(file = switch_home)
+  switch <- "start RL-scheduler"
+  write_lines(switch, path = switch_home, append = FALSE)
+  flog.info("RL-scheduler draait weer", name = "rlsc_log")
+  flog.info("- - - - - - - - - -", name = "rlsc_log")
+  
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # + op Log-mac ----
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  flog.info("Start scriptgeneratie op de Log-mac", name = "rlsc_log")
+  host <- "logmac"
+  home_radiologik <- home_prop("home_radiologik")
+  switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
+  
+  # Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
+  flog.info("RL-scheduler stoppen", name = "rlsc_log")
+  switch <- read_lines(file = switch_home)
+  switch <- "stop RL-scheduler"
+  write_lines(switch, path = switch_home, append = FALSE)
+  
+  Sys.sleep(time = 5)
+  flog.info("RL-scheduler is gestopt", name = "rlsc_log")
+  
+  #+... gooi verlopen scripts weg ----
+  lgm_path <- "//LOGMAC/Radiologik/Schedule"
+  
+  lgm_weekfiles_to_ditch <- get_weekfiles_to_ditch(lgm_path)
+  
+  for (a_file in lgm_weekfiles_to_ditch$dir_info_path) {
+    file_delete(a_file)
+  }
+  
+  
+  #+... herstel volgorde ----
+  resequence_script_names(lgm_path)
+  
+  #+... genereer nieuwe ----
+  scheds_prep <- cur_cz_week_lgm %>% 
+    filter(sched_playlist != "live > geen playlist nodig") %>% 
+    mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
+                                ".",
+                                str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
+                                " ",
+                                sched_playlist)
+    ) %>% 
+    select(ts_playlist) %>% 
+    arrange(ts_playlist)
+  
+  source("src/compile_rlsched_script.R", encoding = "UTF-8")
+  cur_kleurschema <- "geel"
+  
+  for (cur_ts_playlist in scheds_prep$ts_playlist) {
+    cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
+    build_rl_script(cur_ts_playlist, cur_kleurschema)  
+    flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
+  }
+  
+  # RL-scheduler herstarten
+  flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
+  switch <- read_lines(file = switch_home)
+  switch <- "start RL-scheduler"
+  write_lines(switch, path = switch_home, append = FALSE)
+  flog.info("RL-scheduler draait weer", name = "rlsc_log")
+  
+  flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")
 }
-
-# RL-scheduler herstarten
-flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
-switch <- read_lines(file = switch_home)
-switch <- "start RL-scheduler"
-write_lines(switch, path = switch_home, append = FALSE)
-flog.info("RL-scheduler draait weer", name = "rlsc_log")
-flog.info("- - - - - - - - - -", name = "rlsc_log")
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# log-mac
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-flog.info("Start scriptgeneratie op de Log-mac", name = "rlsc_log")
-host <- "logmac"
-home_radiologik <- home_prop("home_radiologik")
-switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
-
-# Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
-flog.info("RL-scheduler stoppen", name = "rlsc_log")
-switch <- read_lines(file = switch_home)
-switch <- "stop RL-scheduler"
-write_lines(switch, path = switch_home, append = FALSE)
-
-Sys.sleep(time = 5)
-flog.info("RL-scheduler is gestopt", name = "rlsc_log")
-
-scheds_prep <- cur_cz_week_lgm %>% 
-  filter(sched_playlist != "live > geen playlist nodig") %>% 
-  mutate(ts_playlist = paste0(format(cz_tijdstip, format = "%Y-%m-%d %a%H"),
-                              ".",
-                              str_pad(cz_slot_len, width = 3, side = "left", pad = "0"),
-                              " ",
-                              sched_playlist)
-  ) %>% 
-  select(ts_playlist) %>% 
-  arrange(ts_playlist)
-
-source("src/compile_rlsched_script.R", encoding = "UTF-8")
-cur_kleurschema <- "geel"
-
-for (cur_ts_playlist in scheds_prep$ts_playlist) {
-  cur_kleurschema <- if_else(cur_kleurschema == "oranje", "geel", "oranje")
-  build_rl_script(cur_ts_playlist, cur_kleurschema)  
-  flog.info("Script toegevoegd: %s", cur_ts_playlist, name = "rlsc_log")
-}
-
-# RL-scheduler herstarten
-flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
-switch <- read_lines(file = switch_home)
-switch <- "start RL-scheduler"
-write_lines(switch, path = switch_home, append = FALSE)
-flog.info("RL-scheduler draait weer", name = "rlsc_log")
-
-flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")

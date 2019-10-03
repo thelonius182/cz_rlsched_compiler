@@ -1,0 +1,33 @@
+---
+output: pdf_document
+title: "Weekschema Playlists"
+# date: '`r config$cur_cz_week`'
+date: '`r dtm <- lubridate::ymd_hm(config$cur_cz_week); format(dtm, format = "%e %B %Y")`'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r schema, echo=FALSE}
+suppressMessages(library(knitr))
+suppressMessages(library(magrittr))
+suppressMessages(library(dplyr))
+suppressMessages(library(stringr))
+suppressMessages(library(kableExtra))
+
+options(knitr.table.format = "latex")
+
+# get weekschema
+mrk_dwn_plws <- readRDS(file = "C:/Users/nipper/r_projects/cz_rlsched_compiler/plws.RDS") 
+
+kable(mrk_dwn_plws,
+      booktabs = T,
+      longtable = T,
+      caption = "Weekschema") %>%
+      kable_styling(
+      latex_options = c("striped", "hold_position", "repeat_header"),
+      font_size = 8,
+      position = "left"
+)
+```

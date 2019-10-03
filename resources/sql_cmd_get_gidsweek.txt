@@ -1,0 +1,33 @@
+CREATE TABLE salsa_plws_gidsweek AS SELECT 
+    DATE_FORMAT(po1.post_date, '%Y%m%d_%H') AS pgmStart,
+    DATE_FORMAT(pm3.meta_value, '%Y%m%d_%H') AS pgmStop,
+    case when pm2.meta_value = '' then po1.post_title
+         else (select po2.post_title from wp_posts po2 where cast(po2.id as unsigned) = pm2.meta_value)
+    end AS pgmPostTitle,
+    case when pm2.meta_value = '' then "-"
+         else (select DATE_FORMAT(po2.post_date, '%Y%m%d_%H') 
+                 from wp_posts po2 where cast(po2.id as unsigned) = pm2.meta_value)
+    end AS herh_van,
+    case when pm2.meta_value = '' then "-"
+         else pm2.meta_value
+    end AS cz_id_herh,
+    po1.id as cz_id,
+    tr1.term_taxonomy_id as pgmLang
+FROM
+    wp_posts po1
+        left JOIN
+    wp_postmeta pm2 ON pm2.post_id = po1.id
+        left JOIN
+    wp_postmeta pm3 ON pm3.post_id = po1.id
+        left JOIN
+    wp_term_relationships tr1 ON tr1.object_id = po1.id
+WHERE
+    po1.post_date >= $#WEEK_START
+    and po1.post_date < $#WEEK_STOP
+    AND pm2.meta_key = 'pr_metadata_orig'
+    AND pm3.meta_key = 'pr_metadata_uitzenddatum_end'
+    AND tr1.term_taxonomy_id = 5
+    AND po1.post_type = 'programma'
+    AND po1.post_status in ('draft', 'publish')
+ORDER BY pgmStart
+;
