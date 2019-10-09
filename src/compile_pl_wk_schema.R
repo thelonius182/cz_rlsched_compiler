@@ -149,6 +149,10 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
   
   plws_from <- paste0("C:/Users/nipper/r_projects/cz_rlsched_compiler/src/", plw_output_name)
   plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
+  plws_to_delete <- paste0(plws_to, "/", plw_output_name)
+  if (file_exists(path = plws_to_delete)) {
+    file_delete(path = plws_to_delete)
+  }    
   file_copy(path = plws_from, new_path = plws_to)
   file_delete(path = plws_from)
   

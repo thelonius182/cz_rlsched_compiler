@@ -1,0 +1,222 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Weekschema Playlists},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Weekschema Playlists}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{}
+    \preauthor{}\postauthor{}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{10 oktober 2019}
+
+
+\begin{document}
+\maketitle
+
+\begingroup\fontsize{8}{10}\selectfont
+\rowcolors{2}{white}{gray!6}
+
+\begin{longtable}[l]{llllll}
+\caption{\label{tab:schema}Weekschema}\\
+\hiderowcolors
+\toprule
+mac & opzoekdatum & titel\_in\_gids & type & duur & playlist\\
+\midrule
+\endfirsthead
+\caption[]{Weekschema \textit{(continued)}}\\
+\toprule
+mac & opzoekdatum & titel\_in\_gids & type & duur & playlist\\
+\midrule
+\endhead
+\
+\endfoot
+\bottomrule
+\endlastfoot
+\showrowcolors
+L & 20191009\_14 & Concertzender Actueel & hijack & 120 & CZ-Actueel (herhaling)\\
+L & 20191010\_14 & Concertzender Live & nieuw & 120 & CZ-Archief\\
+L & 20191011\_14 & Concertzender Live & nieuw & 120 & CZ-Live oud\_klassiek\\
+L & 20191016\_14 & Concertzender Actueel & nieuw & 120 & CZ-Actueel\\
+ &  &  &  &  & \\
+\addlinespace
+U & 20191003\_19 & Klassieke Zaken & HiJack & 060 & Klassieke Zaken (herhaling)\\
+U & 20191003\_20 & De Vorige Eeuw & HiJack & 060 & De Vorige Eeuw (herhaling)\\
+U & 20191003\_21 & Sonoor & HiJack & 060 & Sonoor (herhaling)\\
+U & 20191005\_19 & Holland Jazz & HiJack & 060 & Holland Jazz\\
+U & 20191005\_20 & Het Paleis van de Weemoed & HiJack & 060 & Paleis vd Weemoed (herhaling)\\
+\addlinespace
+U & 20191006\_19 & Sensenta & HiJack & 060 & Sensenta (herhaling)\\
+U & 20191006\_21 & X-Rated & HiJack & 120 & X-rated (herhaling)\\
+U & 20191007\_19 & Nuove Musiche & HiJack & 060 & Nuove Musiche (herhaling)\\
+U & 20191007\_20 & Concertzender Live & HiJack & 120 & CZ-Live hedendaags\\
+U & 20191009\_20 & Thema & HiJack & 120 & Thema\\
+\addlinespace
+ &  &  &  &  & \\
+U & 20191003\_13 & Geen dag zonder Bach & herhaling & 060 & Geen Dag zonder Bach D\_do\\
+U & 20191004\_13 & Geen dag zonder Bach & herhaling & 060 & Geen Dag zonder Bach E\_vr\\
+U & 20191014\_13 & Geen Dag zonder Bach & nieuw & 060 & Geen Dag zonder Bach A\_ma\\
+U & 20191015\_13 & Geen Dag zonder Bach & nieuw & 060 & Geen Dag zonder Bach B\_di\\
+\addlinespace
+U & 20191016\_13 & Geen Dag zonder Bach & nieuw & 060 & Geen Dag zonder Bach C\_wo\\
+ &  &  &  &  & \\
+U & 20191005\_01 & De Nacht: Wereld & herhaling & 360 & De Nacht - Wereldmuziek\\
+U & 20191006\_04 & De Nacht: Klassiek & herhaling & 180 & De Nacht - Klassiek G\_zo\\
+U & 20191008\_01 & De Nacht: Klassiek & herhaling & 360 & De Nacht - Klassiek B\_di\\
+\addlinespace
+U & 20191009\_03 & De Nacht: Klassiek & herhaling & 240 & De Nacht - Klassiek C\_wo\\
+U & 20191010\_02 & De Nacht: Hedendaags & herhaling & 300 & De Nacht - Hedendaags\\
+ &  &  &  &  & \\
+U & 20191010\_16 & Componist van de maand & nieuw & 060 & Componist vd Maand D\_do\\
+U & 20191011\_16 & Componist van de Maand & nieuw & 060 & Componist vd Maand E\_vr\\
+\addlinespace
+U & 20191014\_16 & Componist van de Maand & nieuw & 060 & Componist vd Maand A\_ma\\
+U & 20191015\_16 & Componist van de Maand & nieuw & 060 & Componist vd Maand B\_di\\
+U & 20191016\_16 & Componist van de Maand & nieuw & 060 & Componist vd Maand C\_wo\\
+ &  &  &  &  & \\
+U & 20160506\_21 & De Zwervende Microfoon & herhaling & 060 & Zwervende Microfoon\\
+\addlinespace
+U & 20190105\_18 & The Art of the Improvisers & herhaling & 060 & Art Impro (herhaling)\\
+U & 20190819\_22 & De Modernen & herhaling & 060 & De Modernen\\
+U & 20191004\_19 & Oriënt Express & herhaling & 060 & Oriënt Express (herhaling)\\
+U & 20191004\_20 & El Mundo & herhaling & 060 & El Mundo\\
+U & 20191004\_21 & Exitos Musicales & herhaling & 060 & Exitos Musicales\\
+\addlinespace
+U & 20191005\_10 & Zwerven door de Klassieke Periode & herhaling & 060 & Zwerven (herhaling)\\
+U & 20191005\_13 & Chanson & herhaling & 060 & Chanson (herhaling)\\
+U & 20191005\_16 & Classic Jazz & herhaling & 060 & Classic Jazz (herhaling)\\
+U & 20191005\_18 & Spinning the Blues & herhaling & 060 & Spinning the Blues\\
+U & 20191006\_12 & Een Os op het Dak & herhaling & 060 & Een Os op het Dak\\
+\addlinespace
+U & 20191006\_13 & Paul Korenhofs Opera Actueel & herhaling & 060 & Opera Actueel (herhaling)\\
+U & 20191006\_15 & De Tuin van Oud & herhaling & 060 & Tuin van Oud\\
+U & 20191006\_16 & Documento & herhaling & 060 & Documento (herhaling)\\
+U & 20191006\_17 & Bijdetijds & herhaling & 060 & Bijdetijds (herhaling)\\
+U & 20191006\_20 & Space Exposure & herhaling & 060 & Space Exposure (herhaling)\\
+\addlinespace
+U & 20191007\_05 & Framework 1 & herhaling & 060 & Framework 1\\
+U & 20191007\_06 & Framework 2 & herhaling & 060 & Framework 2\\
+U & 20191007\_23 & Front Runnin’ & herhaling & 060 & Front Runnin' (herhaling)\\
+U & 20191008\_17 & Opera in de 20ste eeuw & herhaling & 060 & Opera-XX (herhaling)\\
+U & 20191008\_18 & Missa etcetera & herhaling & 060 & Missa Etcetera (herhaling)\\
+\addlinespace
+U & 20191008\_19 & De wandeling & herhaling & 060 & Wandeling (herhaling)\\
+U & 20191008\_20 & Radio Romantica & herhaling & 060 & Radio Romantica (herhaling)\\
+U & 20191008\_21 & Tussen droom en daad & herhaling & 060 & Tussen Droom en Daad (herhaling)\\
+U & 20191009\_22 & Electronic Frequencies & herhaling & 060 & El.Frequencies (herhaling)\\
+U & 20191010\_22 & Popart & nieuw & 060 & PopArt\\
+\addlinespace
+U & 20191010\_23 & Pakrammel & nieuw & 060 & Pakrammel\\
+U & 20191011\_19 & Oriënt Express & nieuw & 060 & Oriënt Express\\
+U & 20191011\_20 & Disc-Cover! & nieuw & 060 & Disc-Cover\\
+U & 20191011\_22 & Wereldmineralen & nieuw & 060 & Wereldmineralen\\
+U & 20191011\_23 & Wereldmuziek Club & nieuw & 060 & Wereldmuziek Club\\
+\addlinespace
+U & 20191012\_10 & Zwerven door de Klassieke Periode & nieuw & 060 & Zwerven\\
+U & 20191012\_12 & The Sound of Movies & nieuw & 060 & Sound of Movies\\
+U & 20191012\_13 & Chanson & nieuw & 060 & Chanson\\
+U & 20191012\_14 & Concertzender Live & nieuw & 060 & CZ-Live jazz\\
+U & 20191012\_15 & Three of a Kind & nieuw & 060 & Three of a Kind\\
+\addlinespace
+U & 20191012\_16 & Moanin’ the Blues & nieuw & 060 & Moanin the Blues\\
+U & 20191012\_17 & Krizz Krazz & nieuw & 060 & Krizz Krazz\\
+U & 20191012\_18 & Vocale Jazz & nieuw & 060 & Vocal Jazz\\
+U & 20191012\_19 & Musicians Corner & nieuw & 060 & Musicians Corner\\
+U & 20191012\_20 & Het Paleis van de Weemoed & nieuw & 060 & Paleis vd Weemoed\\
+\addlinespace
+U & 20191012\_22 & JazzNotJazz & nieuw & 060 & JazzNotJazz\\
+U & 20191012\_23 & The Art of the Improvisers & nieuw & 060 & Art Impro\\
+U & 20191013\_10 & Het pianoatelier & nieuw & 060 & Het Pianoatelier\\
+U & 20191013\_11 & Die sanck een Liedt & nieuw & 060 & Die sanck een Liedt\\
+U & 20191013\_12 & Radio Monalisa & nieuw & 060 & Monalisa\\
+\addlinespace
+U & 20191013\_13 & Paul Korenhofs Opera Actueel & nieuw & 060 & Opera Actueel\\
+U & 20191013\_14 & Het Strijkkwartet & nieuw & 060 & Strijkkwartet\\
+U & 20191013\_18 & Folk It! & nieuw & 060 & Folk It!\\
+U & 20191013\_20 & DreamScenes & nieuw & 060 & DreamScenes\\
+U & 20191013\_23 & X-Ray & nieuw & 060 & X-ray\\
+\addlinespace
+U & 20191014\_00 & Dr. Klangendum & nieuw & 060 & Dr Klangendum\\
+U & 20191014\_22 & American Highways & nieuw & 060 & American Highways\\
+U & 20191014\_23 & Front Runnin’ & nieuw & 060 & Front Runnin'\\
+U & 20191015\_17 & Opera in de 20ste eeuw & nieuw & 060 & Opera-XX\\
+U & 20191015\_18 & Missa etcetera & nieuw & 060 & Missa Etcetera\\
+U & 20191016\_22 & Electronic Frequencies & nieuw & 060 & El.Frequencies\\*
+\end{longtable}
+
+\rowcolors{2}{white}{white}\endgroup{}
+
+
+\end{document}

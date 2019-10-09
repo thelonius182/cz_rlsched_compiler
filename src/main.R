@@ -279,7 +279,8 @@ montage_stage <- gd_montage %>%
 montage <- montage_stage %>% 
   mutate(cz_tijdstip = ymd_h(paste0(uzd, " ", str_sub(`Tijd.Duur`, 1, 2))),
          mtr_live_jn = if_else(str_to_lower(Type) == "live", "j", "n")) %>% 
-  select(cz_tijdstip, mtr_live_jn)
+  select(cz_tijdstip, mtr_live_jn) %>% 
+  filter(!is.na(cz_tijdstip))
 
 # huidige week voorbereiden ----
 
@@ -287,14 +288,14 @@ cur_cz_week_uzm <- cur_cz_week_uzm_prep %>%
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
   rename(hh_van_live_jn = mtr_live_jn) %>% 
   left_join(montage) %>%  # Joining, by = "cz_tijdstip"
-  rename(nieuw_live_jn = mtr_live_jn) %>% 
+  rename(nieuw_live_jn = mtr_live_jn) %>%
   mutate(mac = "U")
   
 cur_cz_week_lgm <- cur_cz_week_lgm_prep %>% 
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
   rename(hh_van_live_jn = mtr_live_jn) %>% 
   left_join(montage) %>%  # Joining, by = "cz_tijdstip"
-  rename(nieuw_live_jn = mtr_live_jn) %>% 
+  rename(nieuw_live_jn = mtr_live_jn) %>%
   mutate(mac = "L")
 
 # live-programma's hebben geen script of playlist nodig
