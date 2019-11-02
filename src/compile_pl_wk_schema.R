@@ -138,6 +138,7 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
   ) %>% 
     select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) 
   
+  pl_weekschema %<>% mutate(Gereed = "O")
   # render as pdf -----------------------------------------------------------
   
   # markdown can't see tibbles in 'env', so serialize the weekschema
