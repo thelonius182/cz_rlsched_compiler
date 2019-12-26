@@ -142,13 +142,13 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
   # render as pdf -----------------------------------------------------------
   
   # markdown can't see tibbles in 'env', so serialize the weekschema
-  saveRDS(object = pl_weekschema, file = "C:/Users/nipper/r_projects/cz_rlsched_compiler/plws.RDS")
+  saveRDS(object = pl_weekschema, file = "C:/Users/nipper/r_projects/released/cz_rlsched_compiler/plws.RDS")
   
   rmarkdown::render("src/weekschema_playlists.Rmd", output_file = plw_output_name)
   
   # move to mac-server ------------------------------------------------------
   
-  plws_from <- paste0("C:/Users/nipper/r_projects/cz_rlsched_compiler/src/", plw_output_name)
+  plws_from <- paste0("C:/Users/nipper/r_projects/released/cz_rlsched_compiler/src/", plw_output_name)
   plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
   plws_to_delete <- paste0(plws_to, "/", plw_output_name)
   if (file_exists(path = plws_to_delete)) {
