@@ -1,5 +1,4 @@
 # init --------------------------------------------------------------------
-
 cfg_cur_week_ymd <- format(date(ymd_hm(config$cur_cz_week)), format = "%Y%m%d")
 spb_name <- paste0("spoorboekje_", cfg_cur_week_ymd, ".csv")
 plw_output_name <- paste0("Weekschema Playlists, ", cfg_cur_week_ymd, ".pdf")
@@ -9,16 +8,16 @@ source("src/get_gidsweek.R", encoding = "UTF-8")
 
 valid_spoorboekje <- FALSE
 
-for (one_shot_a in 1:1) { # introduces an exitable flow
+for (seg2 in 1:1) { # creates a break-able segment
   
-  # controleer of de tabel gevuld is
+  #+ controleer of de tabel gevuld is ----
   n_gidsslots <- salsa_plws_gidsweek %>% nrow
   if (n_gidsslots == 0) {
     flog.error("Fout: geen gidsgegevens gevonden voor deze week.", name = "rlsc_log")
     break
   }
 
-  # controleer of er uren in de gids ontbreken
+  #+ controleer of er uren in de gids ontbreken ----
   gidsgaten <- salsa_plws_gidsweek %>%
     mutate(start_next = lead(pgm_start)) %>%
     filter(!is.na(start_next) & start_next != pgm_stop)
@@ -35,6 +34,7 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
                gidsgaten$pgm_stop[n1],
                "u.")
     }
+    
     lg_msg <- sprintf("Fout: de gids is niet compleet. Ontbrekende slots: %s", plws_notification)
     flog.error(lg_msg, name = "rlsc_log")
     break
@@ -45,8 +45,7 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
   spoorboekje <- salsa_plws_gidsweek %>%
     mutate(cur_cz_week_key = ymd_h(paste0(pgm_dtm, " ", pgm_start)))
   
-  # uitzendmac ---------------------------------------------------------------------
-
+  # uitzendmac ----
   pl_weekschema_uzm <- cur_cz_week_uzm %>% 
     left_join(spoorboekje, by = c("cz_tijdstip" = "cur_cz_week_key")) %>% 
     select(mac, pgm_dtm, pgm_start, cz_slot_len, titel_gids = title, 
@@ -67,8 +66,7 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
     select(-dubbel, mac, opzoekdatum = sorteren, titel_in_gids = titel_gids, type = replay, playlist = sched_playlist, duur) %>% 
     filter(playlist != "live > geen playlist nodig")
   
-  # uitzendmac - final order -------------------------------------------------------------
-  
+  #+ uitzendmac - final order ----
   plws_a <- pl_weekschema_uzm %>% filter(mac == "U" 
                                          & str_detect(string = tolower(type), 
                                                       pattern = "hijack"))
@@ -91,8 +89,7 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
                                          & !str_detect(string = tolower(titel_in_gids), 
                                                        pattern = "geen dag zonder|de nacht|componist van de maand"))
   
-  # logmac ---------------------------------------------------------------------
-  
+  # logmac ----
   pl_weekschema_lgm <- cur_cz_week_lgm %>% 
     left_join(spoorboekje, by = c("cz_tijdstip" = "cur_cz_week_key")) %>% 
     select(mac, pgm_dtm, pgm_start, cz_slot_len, titel_gids = title, 
@@ -137,32 +134,35 @@ for (one_shot_a in 1:1) { # introduces an exitable flow
                          plws_e
   ) %>% 
     select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) 
+
+  #+... vinkvakjes voor Benno ----
+  pl_weekschema %<>% mutate(Gereed = if_else(mac %in% c("L", "U"), "O", ""))
   
-  pl_weekschema %<>% mutate(Gereed = "O")
-  # render as pdf -----------------------------------------------------------
-  
-  # markdown can't see tibbles in 'env', so serialize the weekschema
-  saveRDS(object = pl_weekschema, file = "C:/Users/nipper/r_projects/released/cz_rlsched_compiler/plws.RDS")
+  # render as pdf ----
+  #+ markdown can't see tibbles in 'env', so serialize the weekschema ----
+  saveRDS(object = pl_weekschema, file = paste0(config$project_home, "cz_rlsched_compiler/plws.RDS"))
   
   rmarkdown::render("src/weekschema_playlists.Rmd", output_file = plw_output_name)
   
-  # move to mac-server ------------------------------------------------------
-  
-  plws_from <- paste0("C:/Users/nipper/r_projects/released/cz_rlsched_compiler/src/", plw_output_name)
+  # move to mac-server ----
+  plws_from <- paste0(config$project_home, "cz_rlsched_compiler/src/", plw_output_name)
   plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
   plws_to_delete <- paste0(plws_to, "/", plw_output_name)
+  
   if (file_exists(path = plws_to_delete)) {
     file_delete(path = plws_to_delete)
-  }    
+  }
+  
   file_copy(path = plws_from, new_path = plws_to)
   file_delete(path = plws_from)
   
   # delete .tex-file too
-  tex_file <-
-    str_replace(string = plws_from,
-                pattern = "\\.pdf",
-                replacement = ".tex")
+  tex_file <- str_replace(string = plws_from,
+                          pattern = "\\.pdf",
+                          replacement = ".tex")
+  
   if (file_exists(tex_file)) {
     file_delete(path = tex_file)
   }
+  
 }

@@ -38,37 +38,31 @@ flog.info("= = = = = RL-schedulerscript Compiler start = = = = =", name = "rlsc_
 config <- read_yaml("config.yaml")
 source(config$toolbox, encoding = "UTF-8")
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# Modelrooster op GD openen
-# NB!! zonodig: change to new user; er opent een browser dialogue
-#               gs_auth(new_user = TRUE)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-gd_modelrooster <- gs_title(config$cz_modelrooster_gd_reg)
-
-modelrooster <- gd_modelrooster %>% 
-  gs_read(ws = paste0("modelrooster-", config$cz_modelrooster_versie)) 
+# Modelrooster openen ----
+modelrooster <- readRDS(paste0(config$giva.rds.dir, "zenderschema.RDS"))
 
 moro_clean1 <- modelrooster %>%
-  select(-X1,
-         -A,
-         -B,
-         -Balk,
-         -Toon,
-         -matches("^(b|r|te|t\\d)", ignore.case = F)
-         ) %>%
-  rename(hh_offset = `hhOffset-dag.uur`) 
-     # %>% mutate(dag = factor(x = dag, levels = c("do1", "vr1", "za1", "zo1", "ma1", "di1", "wo1", "do2"), ordered = T))
+  mutate(dag = str_sub(slot, 1, 2),
+         start = paste(str_sub(slot, 3, 4), str_sub(slot, 5, 7), sep = ".")
+  ) %>% 
+  select(-balk,
+         -balk_tonen,
+         -starts_with("bijzonderheden"),
+         -starts_with("product"),
+         -slot,
+         hh_offset = hh_formule
+  )
 
 moro_long <-
   gather(
     data = moro_clean1,
-    `elke week`,
-    `week 1`,
-    `week 2`,
-    `week 3`,
-    `week 4`,
-    `week 5`,
-    `twee-wekelijks`,
+    wekelijks,
+    week_1,
+    week_2,
+    week_3,
+    week_4,
+    week_5,
+    AB_cyclus,
     key = "weken",
     value = "titel"
   ) %>% 
@@ -80,9 +74,9 @@ moro_long <-
     thema_detect = paste(dag, start, titel, sep = "¶")
   ) %>%
   # corrigeer "Thema": niet 60 maar 120 minuten, en niet 2 slots maar 1!
-  filter(thema_detect != "wo1¶21.060¶Thema") %>% 
-  mutate(start = if_else(thema_detect == "wo1¶20.060¶Thema", "20.120", start),
-         cz_moro_slot_len = if_else(thema_detect == "wo1¶20.060¶Thema", 120L, cz_moro_slot_len)
+  filter(thema_detect != "wo¶21.060¶Thema") %>% 
+  mutate(start = if_else(thema_detect == "wo¶20.060¶Thema", "20.120", start),
+         cz_moro_slot_len = if_else(thema_detect == "wo¶20.060¶Thema", 120L, cz_moro_slot_len)
   ) %>% 
   arrange(cz_moro_slot, weken)
 
@@ -92,18 +86,19 @@ moro_long <-
 run_cz_week <- config$cur_cz_week
 cz_week_start <- ymd_hm(run_cz_week) - days(14)
 
-cz_cal <- seq(cz_week_start, length.out = 13 * 168, by = "hours") %>% as_tibble()
+cz_cal <- seq(cz_week_start, length.out = 13 * 168, by = "hours") %>% 
+  tibble::enframe(name = NULL)
 
 names(cz_cal) <- "cz_cal_datetime"
 
 cz_cal %<>% mutate(
   cz_cal_slot = format(cz_cal_datetime, format = "%a%H"),
   moro_week = case_when(
-    day(cz_cal_datetime) > 28 ~ "week 5|elke week|twee-wekelijks",
-    day(cz_cal_datetime) > 21 ~ "week 4|elke week|twee-wekelijks",
-    day(cz_cal_datetime) > 14 ~ "week 3|elke week|twee-wekelijks",
-    day(cz_cal_datetime) >  7 ~ "week 2|elke week|twee-wekelijks",
-    TRUE  ~ "week 1|elke week|twee-wekelijks"
+    day(cz_cal_datetime) > 28 ~ "week_5|wekelijks|AB_cyclus",
+    day(cz_cal_datetime) > 21 ~ "week_4|wekelijks|AB_cyclus",
+    day(cz_cal_datetime) > 14 ~ "week_3|wekelijks|AB_cyclus",
+    day(cz_cal_datetime) >  7 ~ "week_2|wekelijks|AB_cyclus",
+    TRUE                      ~ "week_1|wekelijks|AB_cyclus"
   )
 )
 
@@ -123,7 +118,6 @@ cz_cal_moro_hh <- cz_cal_moro %>%
   rename(cz_slot = cz_cal_slot, cz_slot_len = cz_moro_slot_len)
 
 hour(cz_cal_moro_hh$cz_datetime_hh) <- as.integer(cz_cal_moro_hh$uu_1)
-
 
 # weken samenstellen ------------------------------------------------------
 
@@ -149,7 +143,8 @@ cz_week <- bind_rows(week_orig, week_herh) %>%
 cz_week_grp1 <- cz_week %>% group_by(titel, weekschema) %>% 
   summarise(n = n()) %>% 
   filter(n > 1) %>% 
-  select(titel) %>% unique
+  select(titel) %>% 
+  unique
 
 # zelfde titel in zelfde weekschema uit verschillende periodes
 # tezamen levert dat de titels die een aparte replay-playlist nodig hebben
@@ -167,10 +162,7 @@ cz_week_grp2 <- cz_cal_moro_hh %>% select(titel) %>% unique %>%
 
 # apple_scripts - prep voor aanmaken iTunes playlists ---------------------
 
-gd_itunes_cupboard <- gs_title("iTunes cupboard")
-
-itunes_cupboard_stage <- gd_itunes_cupboard %>% 
-  gs_read(ws = "playlist_names")
+itunes_cupboard_stage <- readRDS(paste0(config$giva.rds.dir, "itunes_cupboard.RDS"))
 
 itunes_cupboard <- itunes_cupboard_stage %>% 
   inner_join(cz_week_grp2) %>% # join by titel
@@ -262,23 +254,19 @@ cur_cz_week_lgm_prep <- cz_week %>%
   arrange(titel)
 
 cur_cz_week_uzm_prep <- cz_week %>% 
+  mutate(hczt = hour(cz_tijdstip), hhhv = hour(hh_van)) %>% 
   filter(weekschema == ymd_hm(run_cz_week)) %>% 
   inner_join(itunes_cupboard) %>% # Joining, by = "titel"
   filter(uitzendmac_jn == "j") %>% 
-  filter(!(titel == "Thema" & (hour(cz_tijdstip) == 21 | hour(hh_van) == 21))) %>% 
   select(-starts_with("week"), -uitzendmac_jn) %>% 
   mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
   arrange(titel)
 
-gd_montage <- gs_title("Roosters 3.0")
+montage.I <- readRDS(paste0(config$giva.rds.dir, "montage.RDS")) 
 
-montage_stage <- gd_montage %>% 
-  gs_read(ws = "montage") %>% 
-  select(uzd, `Tijd.Duur`, Type)
-
-montage <- montage_stage %>% 
-  mutate(cz_tijdstip = ymd_h(paste0(uzd, " ", str_sub(`Tijd.Duur`, 1, 2))),
-         mtr_live_jn = if_else(str_to_lower(Type) == "live", "j", "n")) %>% 
+montage <- montage.I %>% 
+  mutate(cz_tijdstip = ymd_h(paste0(uitzending, " ", str_sub(slot, 3, 4))),
+         mtr_live_jn = if_else(str_to_lower(product) == "live", "j", "n")) %>% 
   select(cz_tijdstip, mtr_live_jn) %>% 
   filter(!is.na(cz_tijdstip))
 
@@ -303,13 +291,12 @@ cur_cz_week_lgm <- cur_cz_week_lgm_prep %>%
 cur_cz_week_uzm %<>% 
   mutate(sched_playlist = if_else(nieuw_live_jn == "n" | is.na(nieuw_live_jn), 
                                   sched_playlist, 
-                                  "live > geen playlist nodig")
-         )
+                                  "live > geen playlist nodig"))
+
 cur_cz_week_lgm %<>% 
   mutate(sched_playlist = if_else(nieuw_live_jn == "n" | is.na(nieuw_live_jn), 
                                   sched_playlist, 
-                                  "live > geen playlist nodig")
-         )
+                                  "live > geen playlist nodig"))
 
 # semi-live programma's: systeemdeel van audiofiles (jaar-mnd-dag-dagnaam-uur-duur)
 source("src/compile_cur_week.R", encoding = "UTF-8")

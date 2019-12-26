@@ -19,7 +19,7 @@ suppressMessages(library(kableExtra))
 options(knitr.table.format = "latex")
 
 # get weekschema
-mrk_dwn_plws <- readRDS(file = "C:/Users/nipper/r_projects/released/cz_rlsched_compiler/plws.RDS") 
+mrk_dwn_plws <- readRDS(file = paste0(config$project_home, "cz_rlsched_compiler/plws.RDS"))
 
 kable(mrk_dwn_plws,
       booktabs = T,
