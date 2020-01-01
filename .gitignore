@@ -16,3 +16,5 @@ spoorboekje_20190926.csv
 cz_week_20190926.tsv
 plws.RDS
 config.yaml
+.Rprofile
+.secrets
