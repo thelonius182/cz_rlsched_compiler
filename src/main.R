@@ -455,4 +455,5 @@ if (valid_spoorboekje) {
   flog.info("RL-scheduler draait weer", name = "rlsc_log")
   
   flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")
-}
+
+} # exclude curly br. when running manually!

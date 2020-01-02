@@ -84,10 +84,15 @@ for (seg2 in 1:1) { # creates a break-able segment
                                                       pattern = "componist van de maand"))
   
   plws_e <- pl_weekschema_uzm %>% filter(mac == "U" 
-                                         & !str_detect(string = tolower(type),
-                                                       pattern = "hijack")
-                                         & !str_detect(string = tolower(titel_in_gids), 
-                                                       pattern = "geen dag zonder|de nacht|componist van de maand"))
+                                         & str_detect(string = tolower(titel_in_gids), 
+                                                      pattern = "leve beethoven"))
+  
+  plws_f <- pl_weekschema_uzm %>% 
+    filter(mac == "U" 
+           & !str_detect(string = tolower(type),
+                         pattern = "hijack")
+           & !str_detect(string = tolower(titel_in_gids), 
+                         pattern = "geen dag zonder|de nacht|componist van de maand|leve beethoven"))
   
   # logmac ----
   pl_weekschema_lgm <- cur_cz_week_lgm %>% 
@@ -131,7 +136,8 @@ for (seg2 in 1:1) { # creates a break-able segment
                          plws_b, ws_empty_line,
                          plws_c, ws_empty_line,
                          plws_d, ws_empty_line, 
-                         plws_e
+                         plws_e, ws_empty_line, 
+                         plws_f
   ) %>% 
     select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) 
 
