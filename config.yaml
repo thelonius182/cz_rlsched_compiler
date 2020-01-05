@@ -1,9 +1,14 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # NV-pairs voor dit project
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# project_home: "C:/Users/nipper/r_projects/released/"
+project_home: "C:/Users/nipper/r_projects/"
+
 toolbox: "/Users/nipper/r_projects/salsa_toolbox_r/src/salsa_toolbox.R"
 # nip_xpr_gd_reg: "Nipper Express 0.2.FoSa"
 cz_modelrooster_gd_reg: "Roosters 3.0"
+
+giva.rds.dir: "C:/Users/nipper/cz_rds_store/branches/cz_gdrive/"
 
 # host: "logmac"
 # host: "uitzendmac"
@@ -31,6 +36,6 @@ header-includes:
 - \usepackage{makecell}
 - \usepackage{xcolor}
 
-cz_modelrooster_versie: "20190801"
+cz_modelrooster_versie: "20200102"
 
-cur_cz_week: "2019-11-14 13:00"
+cur_cz_week: "2020-01-02 13:00"
