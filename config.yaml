@@ -1,8 +1,8 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# NV-pairs voor dit project
+# NV-pairs voor RL-schedule compiler ("De CZ-week")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# project_home: "C:/Users/nipper/r_projects/released/"
-project_home: "C:/Users/nipper/r_projects/"
+project_home: "C:/Users/nipper/r_projects/released/"
+# project_home: "C:/Users/nipper/r_projects/"
 
 toolbox: "/Users/nipper/r_projects/salsa_toolbox_r/src/salsa_toolbox.R"
 # nip_xpr_gd_reg: "Nipper Express 0.2.FoSa"
