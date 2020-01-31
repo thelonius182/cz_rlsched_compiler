@@ -147,6 +147,7 @@ for (seg2 in 1:1) { # creates a break-able segment
   # render as pdf ----
   #+ markdown can't see tibbles in 'env', so serialize the weekschema ----
   saveRDS(object = pl_weekschema, file = paste0(config$project_home, "cz_rlsched_compiler/plws.RDS"))
+  saveRDS(object = pl_weekschema, file = "g:\\salsa\\plws.RDS\\plws.RDS") # make available to user marimba
   
   rmarkdown::render("src/weekschema_playlists.Rmd", output_file = plw_output_name)
   

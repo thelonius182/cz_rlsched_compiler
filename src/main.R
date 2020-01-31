@@ -301,6 +301,7 @@ cur_cz_week_lgm %<>%
 # semi-live programma's: systeemdeel van audiofiles (jaar-mnd-dag-dagnaam-uur-duur)
 source("src/compile_cur_week.R", encoding = "UTF-8")
 cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
+saveRDS(object = cur_cz_week_uzm, file = "g:\\salsa\\cur_cz_week_uzm.RDS") # available to marimba user
 cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
 source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 

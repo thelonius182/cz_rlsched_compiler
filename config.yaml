@@ -1,6 +1,6 @@
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# NV-pairs voor RL-schedule compiler ("De CZ-week")
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Configuratiebestand voor P2 - Playlist Weekschema + RadioLogik Weekscripts
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 project_home: "C:/Users/nipper/r_projects/released/"
 # project_home: "C:/Users/nipper/r_projects/"
 
@@ -38,4 +38,4 @@ header-includes:
 
 cz_modelrooster_versie: "20200102"
 
-cur_cz_week: "2020-01-02 13:00"
+cur_cz_week: "2020-01-30 13:00"
