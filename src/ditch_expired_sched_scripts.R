@@ -1,4 +1,7 @@
 get_weekfiles_to_ditch <- function(cz_dir_path) {
+  # TEST 
+  # cz_dir_path = "//UITZENDMAC-CZ/Radiologik/Schedule"
+  # TEST 
   
   script_rgx <- ".*Schedule/[0-9]{3} - ([0-9]{4}-[0-9]{2}-[0-9]{2})_\\w{2}([0-9]{2})_([0-9]{3}).*"
   

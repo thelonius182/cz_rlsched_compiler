@@ -301,7 +301,8 @@ cur_cz_week_lgm %<>%
 # semi-live programma's: systeemdeel van audiofiles (jaar-mnd-dag-dagnaam-uur-duur)
 source("src/compile_cur_week.R", encoding = "UTF-8")
 cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
-saveRDS(object = cur_cz_week_uzm, file = "g:\\salsa\\cur_cz_week_uzm.RDS") # available to marimba user
+# saveRDS(object = cur_cz_week_uzm, file = "g:\\salsa\\cur_cz_week_uzm.RDS") # available to marimba user
+saveRDS(object = cur_cz_week_uzm, file = "/cz_salsa/cz_exchange/cur_cz_week_uzm.RDS") # available to marimba user
 cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
 source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 
@@ -322,7 +323,7 @@ if (valid_spoorboekje) {
   flog.info("RL-scheduler stoppen", name = "rlsc_log")
   switch <- read_lines(file = switch_home)
   switch <- "stop RL-scheduler"
-  write_lines(switch, path = switch_home, append = FALSE)
+  write_lines(switch, file = switch_home, append = FALSE)
   
   Sys.sleep(time = 5)
   flog.info("RL-scheduler is gestopt", name = "rlsc_log")
@@ -393,7 +394,7 @@ if (valid_spoorboekje) {
   flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
   switch <- read_lines(file = switch_home)
   switch <- "start RL-scheduler"
-  write_lines(switch, path = switch_home, append = FALSE)
+  write_lines(switch, file = switch_home, append = FALSE)
   flog.info("RL-scheduler draait weer", name = "rlsc_log")
   flog.info("- - - - - - - - - -", name = "rlsc_log")
   
@@ -409,7 +410,7 @@ if (valid_spoorboekje) {
   flog.info("RL-scheduler stoppen", name = "rlsc_log")
   switch <- read_lines(file = switch_home)
   switch <- "stop RL-scheduler"
-  write_lines(switch, path = switch_home, append = FALSE)
+  write_lines(switch, file = switch_home, append = FALSE)
   
   Sys.sleep(time = 5)
   flog.info("RL-scheduler is gestopt", name = "rlsc_log")
@@ -452,7 +453,7 @@ if (valid_spoorboekje) {
   flog.info("Compiler gereed, start RL-scheduler", name = "rlsc_log")
   switch <- read_lines(file = switch_home)
   switch <- "start RL-scheduler"
-  write_lines(switch, path = switch_home, append = FALSE)
+  write_lines(switch, file = switch_home, append = FALSE)
   flog.info("RL-scheduler draait weer", name = "rlsc_log")
   
   flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")
