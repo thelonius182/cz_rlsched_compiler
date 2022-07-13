@@ -131,9 +131,17 @@ rls_30m_blokken <- function(some_playlist){
 rls_venster <- function(some_playlist) {
   # some_playlist <- "2018-12-31 wo00.420 de nacht klassiek"
   venster_datum_start <- str_sub(some_playlist, 1, 10) %>% ymd
-  venster_datum_stop <- venster_datum_start + days(1) # hier zat de herhaling: days(8)
-  rl_date_fmt <- stamp_date("23 mrt. 2018")
-  venster_datum_start %<>% rl_date_fmt %>% str_replace(pattern = "mei\\.", replacement = "mei ")
-  venster_datum_stop %<>% rl_date_fmt %>% str_replace(pattern = "mei\\.", replacement = "mei ")
+  venster_datum_stop <- venster_datum_start + ddays(1) # hier zat de herhaling: days(8)
+  
+  # UZM
+  # rl_date_fmt <- stamp_date("23 mrt. 2018")
+  # venster_datum_start %<>% rl_date_fmt %>% str_replace(pattern = "mei\\.", replacement = "mei ")
+  # venster_datum_stop %<>% rl_date_fmt %>% str_replace(pattern = "mei\\.", replacement = "mei ")
+  
+  # UZM-2
+  rl_date_fmt <- stamp_date("23 May 2018")
+  venster_datum_start %<>% rl_date_fmt 
+  venster_datum_stop %<>% rl_date_fmt 
+  
   rls_venster_result <- c(venster_datum_start, venster_datum_stop)
 }

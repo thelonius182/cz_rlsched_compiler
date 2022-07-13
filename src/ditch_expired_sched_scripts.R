@@ -3,29 +3,30 @@ get_weekfiles_to_ditch <- function(cz_dir_path) {
   # cz_dir_path = "//UITZENDMAC-CZ/Radiologik/Schedule"
   # TEST 
   
-  script_rgx <- ".*Schedule/[0-9]{3} - ([0-9]{4}-[0-9]{2}-[0-9]{2})_\\w{2}([0-9]{2})_([0-9]{3}).*"
+  # script_rgx <- ".*Schedule/[0-9]{3} - ([0-9]{4}-[0-9]{2}-[0-9]{2})_\\w{2}([0-9]{2})_([0-9]{3}).*"
   
   czweek_sched <- dir_info(path = cz_dir_path) %>% 
-    rename(dir_info_path = path) %>% 
-    filter(str_detect(dir_info_path, "^.*? - [0-9]{4}-.*")) %>%
-    mutate(script_date = sub(script_rgx, "\\1", dir_info_path, perl=TRUE),
-           script_hour = sub(script_rgx, "\\2", dir_info_path, perl=TRUE),
-           script_length = sub(script_rgx, "\\3", dir_info_path, perl=TRUE)) %>% 
-    select(dir_info_path, starts_with("script"))
+    mutate(script_item = sub(".*?/Schedule/(\\d{3}).*", "\\1", path, perl=TRUE),
+           script_date = sub(".*?/Schedule/\\d{3} - ([-0-9]{10})_.*", "\\1", path, perl=TRUE),
+           script_hour = sub(".*?/Schedule/\\d{3} - [-0-9]{10}_\\w{2}(\\d{2}).*", "\\1", path, perl=TRUE),
+           script_length = sub(".*?/Schedule/.*\\w{2}\\d{2}[-_](\\d{3}).*", "\\1", path, perl=TRUE)
+    ) %>% 
+    filter(str_starts(script_date, "[0-9]")) %>%
+    select(path, starts_with("script"))
   
   czweek_expiration <- czweek_sched %>% 
-    mutate(script_ymdh_s = paste0(script_date, " ", script_hour, ":00"),
-           script_ymdh = ymd_hm(script_ymdh_s, tz = "Europe/Amsterdam"),
+    mutate(script_dts_chr = paste0(script_date, " ", script_hour, "00:00"),
+           script_dts = ymd_hms(script_dts_chr, tz = "Europe/Amsterdam"),
            # script verloopt 1 uur na einde uitzending
-           script_expires = script_ymdh + minutes(as.integer(script_length) + 60),
+           script_expires = script_dts + dminutes(as.integer(script_length) + 60L),
            script_interval = interval(script_expires, now(), tz = "Europe/Amsterdam"),
-           expired_h = round(script_interval / dhours(1), digits = 1)
+           expired_h = int_length(script_interval) / 3600
     )
   
   czweek_files_to_ditch <- czweek_expiration %>% 
     select(-starts_with("script")) %>% # pre-select needed to loose var 'interval': 'filter' can't handle that
     filter(expired_h > 0.0) %>% 
-    select(dir_info_path)
+    select(path)
   
   return(czweek_files_to_ditch)
 }

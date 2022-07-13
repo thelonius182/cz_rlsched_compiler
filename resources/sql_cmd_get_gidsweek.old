@@ -1,4 +1,4 @@
-CREATE TABLE plws_gidsweek AS SELECT 
+CREATE TABLE salsa_plws_gidsweek AS SELECT 
     DATE_FORMAT(po1.post_date, '%Y%m%d_%H') AS pgmStart,
     DATE_FORMAT(pm3.meta_value, '%Y%m%d_%H') AS pgmStop,
     case when pm2.meta_value = '' then po1.post_title
@@ -22,8 +22,8 @@ FROM
         left JOIN
     wp_term_relationships tr1 ON tr1.object_id = po1.id
 WHERE
-    po1.post_date >= '2019-10-03 13:00'
-    and po1.post_date < '2019-10-10 13:00'
+    po1.post_date >= $#WEEK_START
+    and po1.post_date < $#WEEK_STOP
     AND pm2.meta_key = 'pr_metadata_orig'
     AND pm3.meta_key = 'pr_metadata_uitzenddatum_end'
     AND tr1.term_taxonomy_id = 5

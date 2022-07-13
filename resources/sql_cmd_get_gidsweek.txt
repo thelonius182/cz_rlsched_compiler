@@ -1,33 +1,94 @@
-CREATE TABLE salsa_plws_gidsweek AS SELECT 
-    DATE_FORMAT(po1.post_date, '%Y%m%d_%H') AS pgmStart,
-    DATE_FORMAT(pm3.meta_value, '%Y%m%d_%H') AS pgmStop,
-    case when pm2.meta_value = '' then po1.post_title
-         else (select po2.post_title from wp_posts po2 where cast(po2.id as unsigned) = pm2.meta_value)
-    end AS pgmPostTitle,
-    case when pm2.meta_value = '' then "-"
-         else (select DATE_FORMAT(po2.post_date, '%Y%m%d_%H') 
-                 from wp_posts po2 where cast(po2.id as unsigned) = pm2.meta_value)
-    end AS herh_van,
-    case when pm2.meta_value = '' then "-"
-         else pm2.meta_value
-    end AS cz_id_herh,
-    po1.id as cz_id,
-    tr1.term_taxonomy_id as pgmLang
+drop temporary table if exists salsa_plws_aux_1
+;
+create temporary table salsa_plws_aux_1 as
+SELECT 
+    po1.id AS cz_id,
+    po1.post_title as pgmPostTitle,
+    DATE_FORMAT(po1.post_date, '%Y%m%d_%H') AS pgmStart
 FROM
     wp_posts po1
-        left JOIN
-    wp_postmeta pm2 ON pm2.post_id = po1.id
-        left JOIN
-    wp_postmeta pm3 ON pm3.post_id = po1.id
-        left JOIN
+        JOIN
     wp_term_relationships tr1 ON tr1.object_id = po1.id
 WHERE
     po1.post_date >= $#WEEK_START
-    and po1.post_date < $#WEEK_STOP
-    AND pm2.meta_key = 'pr_metadata_orig'
-    AND pm3.meta_key = 'pr_metadata_uitzenddatum_end'
-    AND tr1.term_taxonomy_id = 5
-    AND po1.post_type = 'programma'
-    AND po1.post_status in ('draft', 'publish')
-ORDER BY pgmStart
+        AND po1.post_date < $#WEEK_STOP
+        AND tr1.term_taxonomy_id = 5
+        AND po1.post_type = 'programma'
+        AND po1.post_status = 'publish'
+ORDER BY 2
+;
+ALTER TABLE salsa_plws_aux_1 ADD INDEX (cz_id)
+;
+drop temporary table if exists salsa_plws_aux_2
+;
+create temporary table salsa_plws_aux_2 as
+SELECT 
+    pa1.cz_id,
+    DATE_FORMAT(pm3.meta_value, '%Y%m%d_%H') AS pgmStop
+FROM
+    salsa_plws_aux_1 pa1
+        JOIN
+    wp_postmeta pm3 ON pm3.post_id = pa1.cz_id
+WHERE
+    pm3.meta_key = 'pr_metadata_uitzenddatum_end'
+ORDER BY 1
+;
+ALTER TABLE salsa_plws_aux_2 ADD INDEX (cz_id)
+;
+drop temporary table if exists salsa_plws_aux_3
+;
+create temporary table salsa_plws_aux_3 as
+SELECT 
+    pa1.cz_id,
+    case when pm2.meta_value is not null and char_length(trim(pm2.meta_value)) > 0
+            then cast(pm2.meta_value as unsigned) 
+		 else -1
+	end as cz_id_herh
+FROM
+    salsa_plws_aux_1 pa1
+        left JOIN
+    wp_postmeta pm2 ON pm2.post_id = pa1.cz_id
+WHERE
+    pm2.meta_key = 'pr_metadata_orig'
+ORDER BY 1
+;
+ALTER TABLE salsa_plws_aux_3 ADD INDEX (cz_id)
+;
+drop temporary table if exists salsa_plws_aux_4
+;
+create temporary table salsa_plws_aux_4 as
+SELECT 
+    pa3.cz_id_herh,
+    po1.post_title as pgmPostTitle_herh,
+    DATE_FORMAT(po1.post_date, '%Y%m%d_%H') as herh_van
+FROM
+    salsa_plws_aux_3 pa3
+        JOIN
+    wp_posts po1 ON po1.id = pa3.cz_id_herh
+WHERE
+    pa3.cz_id_herh > 0
+ORDER BY 1
+;
+ALTER TABLE salsa_plws_aux_4 ADD INDEX (cz_id_herh)
+;
+
+select distinct pgmStart,
+       pgmStop,
+       case when pgmPostTitle_herh is not null then pgmPostTitle_herh
+            else pgmPostTitle
+	   end as pgmPostTitle,
+       case when herh_van is not null then herh_van
+            else '-'
+	   end as herh_van,
+       case when t3.cz_id_herh is not null then t3.cz_id_herh
+            else '-'
+	   end as cz_id_herh,
+       t1.cz_id,
+       5 as pgmLang
+from salsa_plws_aux_1 t1 left join (salsa_plws_aux_3 t3 join salsa_plws_aux_4 t4 
+                                                          on t3.cz_id_herh = t4.cz_id_herh)
+                                on t1.cz_id = t3.cz_id 
+                         join salsa_plws_aux_2 t2
+                           on t1.cz_id = t2.cz_id
+order by 1
 ;
