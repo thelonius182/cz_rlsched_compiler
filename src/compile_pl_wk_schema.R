@@ -11,6 +11,7 @@ valid_spoorboekje <- FALSE
 for (seg2 in 1:1) { # creates a break-able segment
   
   #+ controleer of de tabel gevuld is ----
+  flog.info("Gidsweek controleren", name = "rlsc_log")
   n_gidsslots <- salsa_plws_gidsweek %>% nrow
   if (n_gidsslots == 0) {
     flog.error("Fout: geen gidsgegevens gevonden voor deze week.", name = "rlsc_log")
@@ -40,12 +41,10 @@ for (seg2 in 1:1) { # creates a break-able segment
     break
   }
   
-  valid_spoorboekje <- TRUE
-  
   spoorboekje <- salsa_plws_gidsweek %>%
     mutate(cur_cz_week_key = ymd_h(paste0(pgm_dtm, " ", pgm_start)))
   
-  # uitzendmac ----
+  # uitzendmac
   pl_weekschema_uzm <- cur_cz_week_uzm %>% 
     left_join(spoorboekje, by = c("cz_tijdstip" = "cur_cz_week_key")) %>% 
     select(mac, pgm_dtm, pgm_start, cz_slot_len, titel_gids = title, 
@@ -81,20 +80,20 @@ for (seg2 in 1:1) { # creates a break-able segment
   
   plws_d <- pl_weekschema_uzm %>% filter(mac == "U" 
                                          & str_detect(string = tolower(titel_in_gids), 
-                                                      pattern = "componist van de maand"))
+                                                      pattern = "in de schijnwerper"))
   
-  plws_e <- pl_weekschema_uzm %>% filter(mac == "U" 
-                                         & str_detect(string = tolower(titel_in_gids), 
-                                                      pattern = "leve beethoven"))
+  # plws_e <- pl_weekschema_uzm %>% filter(mac == "U" 
+  #                                        & str_detect(string = tolower(titel_in_gids), 
+  #                                                     pattern = "leve beethoven"))
   
-  plws_f <- pl_weekschema_uzm %>% 
+  plws_e <- pl_weekschema_uzm %>% 
     filter(mac == "U" 
            & !str_detect(string = tolower(type),
                          pattern = "hijack")
            & !str_detect(string = tolower(titel_in_gids), 
-                         pattern = "geen dag zonder|de nacht|componist van de maand|leve beethoven"))
+                         pattern = "geen dag zonder|de nacht|in de schijnwerper"))
   
-  # logmac ----
+  #+ logmac ----
   pl_weekschema_lgm <- cur_cz_week_lgm %>% 
     left_join(spoorboekje, by = c("cz_tijdstip" = "cur_cz_week_key")) %>% 
     select(mac, pgm_dtm, pgm_start, cz_slot_len, titel_gids = title, 
@@ -117,7 +116,7 @@ for (seg2 in 1:1) { # creates a break-able segment
     mutate(type = if_else(titel_in_gids == "Concertzender Actueel" & type == "herhaling", "hijack", type))
   
   
-  # merge logmac/uitzendmac -------------------------------------------------
+  #+ merge logmac/uitzendmac -------------------------------------------------
   
   ws_empty_line <- pl_weekschema_uzm %>% head(n = 1) %>%
     mutate(
@@ -136,25 +135,46 @@ for (seg2 in 1:1) { # creates a break-able segment
                          plws_b, ws_empty_line,
                          plws_c, ws_empty_line,
                          plws_d, ws_empty_line, 
-                         plws_e, ws_empty_line, 
-                         plws_f
+                         plws_e, ws_empty_line 
   ) %>% 
     select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) 
-
-  #+... vinkvakjes voor Benno ----
+  
+  #+ controleer op duplicates ----
+  pl_weekschema_dups <-
+    pl_weekschema %>% 
+    filter(str_length(str_trim(playlist)) > 0) %>% 
+    group_by(playlist) %>% 
+    summarise(n = n()) %>% 
+    filter(n > 1)
+  
+  if (nrow(pl_weekschema_dups) > 0) {
+    flog.error("Fout: dubbele files voor zelfde playlist(s) aangetroffen.", name = "rlsc_log")
+    flog.info(paste0("Zie playlists ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
+              name = "rlsc_log")
+    flog.info("Er is GEEN output gemaakt.", name = "rlsc_log")
+    break
+  }
+  
+  #+ OK! ----
+  valid_spoorboekje <- TRUE
+  flog.info("Gidsweek is in orde", name = "rlsc_log")
+  
+  #+ vinkvakjes voor Benno ----
   pl_weekschema %<>% mutate(Gereed = if_else(mac %in% c("L", "U"), "O", ""))
   
-  # render as pdf ----
-  #+ markdown can't see tibbles in 'env', so serialize the weekschema ----
+  #+ render as pdf ----
+  # markdown can't see tibbles in 'env', so serialize the weekschema 
   saveRDS(object = pl_weekschema, file = paste0(config$project_home, "cz_rlsched_compiler/plws.RDS"))
   # saveRDS(object = pl_weekschema, file = "g:\\salsa\\plws.RDS\\plws.RDS") # make available to user marimba
   saveRDS(object = pl_weekschema, file = "/cz_salsa/cz_exchange/plws.RDS") # make available to user marimba
   
+  flog.info("Genereer de pdf", name = "rlsc_log")
   rmarkdown::render("src/weekschema_playlists.Rmd", output_file = plw_output_name)
   
-  # move to mac-server ----
+  #+ move to mac-server ----
   plws_from <- paste0(config$project_home, "cz_rlsched_compiler/src/", plw_output_name)
-  plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
+  plws_to <- "//192.168.1.81/Server RAID disk/Shared Items/kantoor/programmas/presentatie&techniek/playlist weekschema's"
+  # plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
   plws_to_delete <- paste0(plws_to, "/", plw_output_name)
   
   if (file_exists(path = plws_to_delete)) {
@@ -162,6 +182,7 @@ for (seg2 in 1:1) { # creates a break-able segment
   }
   
   file_copy(path = plws_from, new_path = plws_to)
+  flog.info("pdf staat op de mac-server", name = "rlsc_log")
   file_delete(path = plws_from)
   
   # delete .tex-file too

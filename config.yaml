@@ -15,11 +15,14 @@ giva.rds.dir: "C:/Users/nipper/cz_rds_store/branches/cz_gdrive/"
 
 # home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik--preview/"
 
-home_radiologik.logmac: "//LOGMAC/Radiologik/"
-home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
+# home_radiologik.logmac: "//LOGMAC/Radiologik/"
+home_radiologik.logmac: "//LOGMAC/tech/Music/Radiologik/"
+# home_radiologik.uitzendmac: "//UITZENDMAC-CZ/Radiologik/"
+home_radiologik.uitzendmac: "//Uitzendmac-2/tech_1/Music/Radiologik/"
 
 home_schedulerswitch.logmac: "//LOGMAC/tech/Documents/Salsa/nipper_ctl/"
-home_schedulerswitch.uitzendmac: "//UITZENDMAC-CZ/tech/Documents/Salsa/nipper_ctl/"
+# home_schedulerswitch.uitzendmac: "//UITZENDMAC-CZ/tech/Documents/Salsa/nipper_ctl/"
+home_schedulerswitch.uitzendmac: "//Uitzendmac-2/tech_1/Documents/Salsa/nipper_ctl/"
 header-includes:
 - \usepackage{booktabs}
 - \usepackage{longtable}
@@ -36,6 +39,6 @@ header-includes:
 - \usepackage{makecell}
 - \usepackage{xcolor}
 
-cz_modelrooster_versie: "20201231"
+cz_modelrooster_versie: "20220113"
 
-cur_cz_week: "2020-12-31 13:00"
+cur_cz_week: "2022-07-14 13:00"

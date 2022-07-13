@@ -5,6 +5,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Init
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+library(officer)
 library(tidyr)
 library(knitr)
 library(rmarkdown)
@@ -21,7 +22,6 @@ library(readr)
 library(futile.logger)
 library(keyring)
 library(RMySQL)
-library(officer)
 
 filter <- dplyr::filter # voorkom verwarring met stats::filter
 
@@ -32,7 +32,7 @@ home_prop <- function(prop) {
     str_replace_all(pattern = "\\%2F", replacement = "/")
 }
 
-flog.appender(appender.file("/Users/nipper/Logs/rlsched_compiler.log"), name = "rlsc_log")
+f1 <- flog.appender(appender.file("/Users/nipper/Logs/rlsched_compiler.log"), name = "rlsc_log")
 flog.info("= = = = = RL-schedulerscript Compiler start = = = = =", name = "rlsc_log")
 
 config <- read_yaml("config.yaml")
@@ -106,16 +106,16 @@ cz_cal_moro <- cz_cal %>%
   inner_join(moro_long, by = c("cz_cal_slot" = "cz_moro_slot")) %>%
   filter(str_detect(string = weken, pattern = moro_week))
 
-cz_cal_moro_hh <- cz_cal_moro %>%
+suppressWarnings(cz_cal_moro_hh <- cz_cal_moro %>%
   mutate(
     hh_1 = str_sub(hh_offset, 1, 2),
     # hh_inc_dagen = if_else(hh_1 == "tw", 7L, as.integer(hh_1)),
     hh_inc_dagen = as.integer(hh_1),
-    cz_datetime_hh = cz_cal_datetime + days(hh_inc_dagen),
+    cz_datetime_hh = cz_cal_datetime + ddays(hh_inc_dagen),
     # uu_1 = if_else(hh_offset == "tw", str_sub(cz_slot, 3, 4), str_sub(hh_offset, 5, 6)),
     uu_1 = str_sub(hh_offset, 5, 6)
   ) %>% 
-  rename(cz_slot = cz_cal_slot, cz_slot_len = cz_moro_slot_len)
+  rename(cz_slot = cz_cal_slot, cz_slot_len = cz_moro_slot_len))
 
 hour(cz_cal_moro_hh$cz_datetime_hh) <- as.integer(cz_cal_moro_hh$uu_1)
 
@@ -299,7 +299,7 @@ cur_cz_week_lgm %<>%
                                   "live > geen playlist nodig"))
 
 # semi-live programma's: systeemdeel van audiofiles (jaar-mnd-dag-dagnaam-uur-duur)
-source("src/compile_cur_week.R", encoding = "UTF-8")
+source("src/compile_cur_week.R", encoding = "UTF-8") # functions only
 cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
 # saveRDS(object = cur_cz_week_uzm, file = "g:\\salsa\\cur_cz_week_uzm.RDS") # available to marimba user
 saveRDS(object = cur_cz_week_uzm, file = "/cz_salsa/cz_exchange/cur_cz_week_uzm.RDS") # available to marimba user
@@ -309,7 +309,7 @@ source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 # Vervang de scripts ----
 if (valid_spoorboekje) {
 
-  source("src/ditch_expired_sched_scripts.R", encoding = "UTF-8")
+  source("src/ditch_expired_sched_scripts.R", encoding = "UTF-8") # functions only
   
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   #+ op Uitzend-mac ----
@@ -317,7 +317,7 @@ if (valid_spoorboekje) {
   flog.info("Start scriptgeneratie op de Uitzend-mac", name = "rlsc_log")
   host <- "uitzendmac"
   home_radiologik <- home_prop("home_radiologik")
-  switch_home <- paste0(home_prop("home_schedulerswitch"), "/nipper_msg.txt")
+  switch_home <- paste0(home_prop("home_schedulerswitch"), "nipper_msg.txt")
   
   # Stop RL-scheduler en wacht 5 seconden - stoppen duurt soms even
   flog.info("RL-scheduler stoppen", name = "rlsc_log")
@@ -329,40 +329,41 @@ if (valid_spoorboekje) {
   flog.info("RL-scheduler is gestopt", name = "rlsc_log")
   
   #+... gooi verlopen scripts weg ----
-  uzm_path <- "//UITZENDMAC-CZ/Radiologik/Schedule"
+  # uzm_path <- "//UITZENDMAC-CZ/Radiologik/Schedule"
+  uzm_path <- paste0(home_prop("home_radiologik"), "Schedule/")
   
-  # Ochtendeditie-scripts
-  oe_sched <- dir_info(path = uzm_path) %>% 
-    filter(str_detect(path, "ochtendeditie")) %>% 
-    mutate(script_item = str_sub(path, 37, 39),
-           script_date = str_sub(path, 43, 50),
-           script_hour = str_sub(path, 54, 55),
-           script_length = str_sub(path, 57, 59)
-    ) %>% 
-    select(path, starts_with("script"))
+  # # Ochtendeditie-scripts
+  # oe_sched <- dir_info(path = uzm_path) %>% 
+  #   filter(str_detect(path, "ochtendeditie")) %>% 
+  #   mutate(script_item = sub(".*?/Schedule/(\\d{3}).*", "\\1", path, perl=TRUE),
+  #          script_date = sub(".*?/Schedule/\\d{3} - ([-0-9]{10})_.*", "\\1", path, perl=TRUE),
+  #          script_hour = sub(".*?/Schedule/\\d{3} - [-0-9]{10}_\\w{2}(\\d{2}).*", "\\1", path, perl=TRUE),
+  #          script_length = sub(".*?/Schedule/.*\\w{2}\\d{2}-(\\d{3}).*", "\\1", path, perl=TRUE)
+  #   ) %>% 
+  #   select(path, starts_with("script"))
+  # 
+  # oe_expiration <- oe_sched %>% 
+  #   mutate(script_dts_chr = paste0(script_date, " ", script_hour, "00:00"),
+  #          script_dts = ymd_hms(script_dts_chr, tz = "Europe/Amsterdam"),
+  #          # script verloopt 1 uur na einde uitzending
+  #          script_expires = script_dts + dminutes(as.integer(script_length) + 60L),
+  #          script_interval = interval(script_expires, now(), tz = "Europe/Amsterdam"),
+  #          expired_h = int_length(script_interval) / 3600
+  #   )
+  # 
+  # oe_files_to_ditch <- oe_expiration %>% 
+  #   select(-starts_with("script")) %>% 
+  #   filter(expired_h > 0.0) %>% 
+  #   select(path)
+  # 
+  # for (a_file in oe_files_to_ditch$path) {
+  #   file_delete(a_file)
+  # }
+  # 
   
-  oe_expiration <- oe_sched %>% 
-    mutate(script_ymdh_s = paste0(script_date, " ", script_hour, ":00"),
-           script_ymdh = ymd_hm(script_ymdh_s, tz = "Europe/Amsterdam"),
-           # script verloopt 1 uur na einde uitzending; voor OE komen daar 7 dagen bij, vanwege herhaling
-           script_expires = script_ymdh + minutes(as.integer(script_length) + 60) + days(7),
-           script_interval = interval(script_expires, now(), tz = "Europe/Amsterdam"),
-           expired_h = round(script_interval / dhours(1), digits = 1)
-    )
-  
-  oe_files_to_ditch <- oe_expiration %>% 
-    select(-starts_with("script")) %>% 
-    filter(expired_h > 0.0) %>% 
-    select(path)
-  
-  for (a_file in oe_files_to_ditch$path) {
-    file_delete(a_file)
-  }
-  
-  # weekscripts
   uzm_weekfiles_to_ditch <- get_weekfiles_to_ditch(uzm_path)
   
-  for (a_file in uzm_weekfiles_to_ditch$dir_info_path) {
+  for (a_file in uzm_weekfiles_to_ditch$path) {
     file_delete(a_file)
   }
   
@@ -416,11 +417,11 @@ if (valid_spoorboekje) {
   flog.info("RL-scheduler is gestopt", name = "rlsc_log")
   
   #+... gooi verlopen scripts weg ----
-  lgm_path <- "//LOGMAC/Radiologik/Schedule"
+  lgm_path <- paste0(home_prop("home_radiologik"), "Schedule/")
   
   lgm_weekfiles_to_ditch <- get_weekfiles_to_ditch(lgm_path)
   
-  for (a_file in lgm_weekfiles_to_ditch$dir_info_path) {
+  for (a_file in lgm_weekfiles_to_ditch$path) {
     file_delete(a_file)
   }
   
@@ -456,6 +457,7 @@ if (valid_spoorboekje) {
   write_lines(switch, file = switch_home, append = FALSE)
   flog.info("RL-scheduler draait weer", name = "rlsc_log")
   
-  flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")
 
 } # exclude curly br. when running manually!
+
+flog.info("= = = = = RL-schedulerscript Compiler stop = = = = =", name = "rlsc_log")
