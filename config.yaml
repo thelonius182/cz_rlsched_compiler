@@ -39,6 +39,6 @@ header-includes:
 - \usepackage{makecell}
 - \usepackage{xcolor}
 
-cz_modelrooster_versie: "20220113"
+cz_modelrooster_versie: "20230105"
 
-cur_cz_week: "2022-07-14 13:00"
+cur_cz_week: "2023-02-09 13:00"
