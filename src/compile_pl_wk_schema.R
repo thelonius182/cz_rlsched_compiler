@@ -137,7 +137,7 @@ for (seg2 in 1:1) { # creates a break-able segment
                          plws_d, ws_empty_line, 
                          plws_e, ws_empty_line 
   ) %>% 
-    select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) 
+    select(mac, opzoekdatum, titel_in_gids, type, duur, playlist) %>% distinct()
   
   #+ controleer op duplicates ----
   pl_weekschema_dups <-
@@ -149,8 +149,9 @@ for (seg2 in 1:1) { # creates a break-able segment
   
   if (nrow(pl_weekschema_dups) > 0) {
     flog.error("Fout: dubbele files voor zelfde playlist(s) aangetroffen.", name = "rlsc_log")
-    flog.info(paste0("Zie playlists ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
+    flog.info(paste0("Zoek in modelrooster naar het slot voor playlist ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
               name = "rlsc_log")
+    flog.info("Kijk dan in de gids, wsch staat daar een hh van een hh. Gebruik de repeat-reducer.", name = "rlsc_log")
     flog.info("Er is GEEN output gemaakt.", name = "rlsc_log")
     break
   }
@@ -173,7 +174,7 @@ for (seg2 in 1:1) { # creates a break-able segment
   
   #+ move to mac-server ----
   plws_from <- paste0(config$project_home, "cz_rlsched_compiler/src/", plw_output_name)
-  plws_to <- "//192.168.1.81/Server RAID disk/Shared Items/kantoor/programmas/presentatie&techniek/playlist weekschema's"
+  plws_to <- "//MACSERVER/Server RAID disk/Shared Items/kantoor/programmas/presentatie&techniek/playlist weekschema's"
   # plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
   plws_to_delete <- paste0(plws_to, "/", plw_output_name)
   
