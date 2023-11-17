@@ -103,7 +103,7 @@ cz_cal %<>% mutate(
 )
 
 cz_cal_moro <- cz_cal %>% 
-  inner_join(moro_long, by = c("cz_cal_slot" = "cz_moro_slot")) %>%
+  inner_join(moro_long, by = c("cz_cal_slot" = "cz_moro_slot"), relationship = "many-to-many") %>%
   filter(str_detect(string = weken, pattern = moro_week))
 
 suppressWarnings(cz_cal_moro_hh <- cz_cal_moro %>%

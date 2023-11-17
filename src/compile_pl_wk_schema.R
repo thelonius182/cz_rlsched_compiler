@@ -149,7 +149,7 @@ for (seg2 in 1:1) { # creates a break-able segment
   
   if (nrow(pl_weekschema_dups) > 0) {
     flog.error("Fout: dubbele files voor zelfde playlist(s) aangetroffen.", name = "rlsc_log")
-    flog.info(paste0("Zoek in modelrooster naar het slot voor playlist ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
+    flog.info(paste0("Zoek in modelrooster de herhaalslots van programma ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
               name = "rlsc_log")
     flog.info("Kijk dan in de gids, wsch staat daar een hh van een hh. Gebruik de repeat-reducer.", name = "rlsc_log")
     flog.info("Er is GEEN output gemaakt.", name = "rlsc_log")
