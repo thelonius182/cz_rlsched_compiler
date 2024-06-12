@@ -5,23 +5,8 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Init
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-library(officer)
-library(tidyr)
-library(knitr)
-library(rmarkdown)
-library(googlesheets4)
-library(RCurl)
-library(yaml)
-library(magrittr)
-library(stringr)
-library(dplyr)
-library(purrr)
-library(lubridate)
-library(fs)
-library(readr)
-library(futile.logger)
-library(keyring)
-library(RMySQL)
+pacman::p_load(officer, tidyr, knitr, rmarkdown, googlesheets4, RCurl, yaml, magrittr, stringr,
+               dplyr, purrr, lubridate, fs, readr, futile.logger, keyring, RMySQL)
 
 filter <- dplyr::filter # voorkom verwarring met stats::filter
 
@@ -247,7 +232,7 @@ rm(
 # montagerooster koppelen -----------------------------------------------------
 cur_cz_week_lgm_prep <- cz_week %>% 
   filter(weekschema == ymd_hm(run_cz_week)) %>% 
-  inner_join(itunes_cupboard) %>% # Joining, by = "titel"
+  inner_join(itunes_cupboard, by = join_by(titel)) %>% 
   filter(uitzendmac_jn == "n") %>% 
   select(-starts_with("week"), -uitzendmac_jn) %>% 
   mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
@@ -256,7 +241,7 @@ cur_cz_week_lgm_prep <- cz_week %>%
 cur_cz_week_uzm_prep <- cz_week %>% 
   mutate(hczt = hour(cz_tijdstip), hhhv = hour(hh_van)) %>% 
   filter(weekschema == ymd_hm(run_cz_week)) %>% 
-  inner_join(itunes_cupboard) %>% # Joining, by = "titel"
+  inner_join(itunes_cupboard, by = join_by(titel)) %>% 
   filter(uitzendmac_jn == "j") %>% 
   select(-starts_with("week"), -uitzendmac_jn) %>% 
   mutate(sched_playlist = if_else(is.na(hh_van) | is.na(playlist_hh), titel, playlist_hh)) %>%
@@ -275,14 +260,14 @@ montage <- montage.I %>%
 cur_cz_week_uzm <- cur_cz_week_uzm_prep %>% 
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
   rename(hh_van_live_jn = mtr_live_jn) %>% 
-  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
+  left_join(montage, by = join_by(cz_tijdstip)) %>% 
   rename(nieuw_live_jn = mtr_live_jn) %>%
   mutate(mac = "U")
   
 cur_cz_week_lgm <- cur_cz_week_lgm_prep %>% 
   left_join(montage, by = c("hh_van" = "cz_tijdstip")) %>% 
   rename(hh_van_live_jn = mtr_live_jn) %>% 
-  left_join(montage) %>%  # Joining, by = "cz_tijdstip"
+  left_join(montage, by = join_by(cz_tijdstip)) %>%
   rename(nieuw_live_jn = mtr_live_jn) %>%
   mutate(mac = "L")
 
