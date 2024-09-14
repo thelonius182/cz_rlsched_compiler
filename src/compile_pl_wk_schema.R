@@ -172,10 +172,9 @@ for (seg2 in 1:1) { # creates a break-able segment
   flog.info("Genereer de pdf", name = "rlsc_log")
   rmarkdown::render("src/weekschema_playlists.Rmd", output_file = plw_output_name)
   
-  #+ move to mac-server ----
+  #+ move to Synology ----
   plws_from <- paste0(config$project_home, "cz_rlsched_compiler/src/", plw_output_name)
-  plws_to <- "//MACSERVER/Server RAID disk/Shared Items/kantoor/programmas/presentatie&techniek/playlist weekschema's"
-  # plws_to <- "Z:/Shared Items/Kantoor/PROGRAMMAS/Presentatie&Techniek/playlist weekschema's"
+  plws_to <- "//cz-synology/programmas/presentatie&techniek/playlist weekschema's"
   plws_to_delete <- paste0(plws_to, "/", plw_output_name)
   
   if (file_exists(path = plws_to_delete)) {
@@ -183,7 +182,7 @@ for (seg2 in 1:1) { # creates a break-able segment
   }
   
   file_copy(path = plws_from, new_path = plws_to)
-  flog.info("pdf staat op de mac-server", name = "rlsc_log")
+  flog.info("pdf staat op de synology", name = "rlsc_log")
   file_delete(path = plws_from)
   
   # delete .tex-file too
