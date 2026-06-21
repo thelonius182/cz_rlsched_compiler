@@ -147,11 +147,16 @@ for (seg2 in 1:1) { # creates a break-able segment
     summarise(n = n()) %>% 
     filter(n > 1)
   
+  
   if (nrow(pl_weekschema_dups) > 0) {
-    flog.error("Fout: dubbele files voor zelfde playlist(s) aangetroffen.", name = "rlsc_log")
-    flog.info(paste0("Zoek in modelrooster de herhaalslots van programma ", str_flatten(pl_weekschema_dups$playlist, collapse = ", ")), 
-              name = "rlsc_log")
-    flog.info("Kijk dan in de gids, wsch staat daar een hh van een hh. Gebruik de repeat-reducer.", name = "rlsc_log")
+    err_itunes_folder <- pl_weekschema |> filter(playlist %in% pl_weekschema_dups$playlist) |> 
+      inner_join(spoorboekje, by = join_by(titel_in_gids == title)) |> 
+      filter(type == "nieuw" | type == "herhaling" & herh_van != "-") |> 
+      select(mac:playlist, uitzending = cur_cz_week_key)
+    capture.output(print(err_itunes_folder, width = Inf), file = "c:/Users/nipper/Logs/err_itunes_folder.tsv")
+    
+    flog.error("Fout: meer dan 1 file voor dezelfde playlist-map aangetroffen.", name = "rlsc_log")
+    flog.info("Details: zie c:/Users/nipper/Logs/err_itunes_folder.tsv", name = "rlsc_log")
     flog.info("Er is GEEN output gemaakt.", name = "rlsc_log")
     break
   }

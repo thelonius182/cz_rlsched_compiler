@@ -292,6 +292,8 @@ cur_cz_week_uzm <- build_cur_cz_week(cur_cz_week_uzm)
 saveRDS(object = cur_cz_week_uzm, file = "/cz_salsa/cz_exchange/cur_cz_week_uzm.RDS") # available to marimba user
 cur_cz_week_lgm <- build_cur_cz_week(cur_cz_week_lgm)
 
+# run to 294 to check double files for same playlist
+
 source("src/compile_pl_wk_schema.R", encoding = "UTF-8")
 
 # Vervang de scripts ----
